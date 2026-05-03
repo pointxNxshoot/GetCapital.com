@@ -72,8 +72,8 @@ export function AnimatedFeatureSection({
         {number && (
           <motion.span
             variants={numberVariants}
-            className="absolute top-0 right-0 lg:right-4 font-light select-none pointer-events-none"
-            style={{ fontSize: "var(--font-size-section-number)", fontFamily: "var(--font-display)" }}
+            className="absolute font-light leading-none select-none pointer-events-none bottom-0 right-0 text-6xl lg:text-[length:var(--font-size-section-number)] lg:top-0 lg:right-4 lg:bottom-auto"
+            style={{ fontFamily: "var(--font-display)" }}
           >
             {number}
           </motion.span>

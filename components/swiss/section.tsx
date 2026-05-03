@@ -24,8 +24,8 @@ export function Section({
     <section className={cn(bgStyles[background], "relative", className)}>
       {number && (
         <span
-          className="absolute top-8 right-8 lg:right-12 font-light opacity-20 select-none pointer-events-none"
-          style={{ fontSize: "var(--font-size-section-number)", fontFamily: "var(--font-display)" }}
+          className="absolute font-light leading-none opacity-20 select-none pointer-events-none bottom-8 right-8 text-6xl lg:text-[length:var(--font-size-section-number)] lg:top-8 lg:right-12 lg:bottom-auto"
+          style={{ fontFamily: "var(--font-display)" }}
         >
           {number}
         </span>
