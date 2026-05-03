@@ -2,7 +2,6 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { AnimatedHeadline } from "./animated-headline";
-import { DotPattern } from "./dot-pattern";
 import { CTAButton } from "./cta-button";
 
 const ease: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -11,12 +10,7 @@ export function Hero() {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden">
-      {/* Dot pattern background with ripple effect */}
-      <div className="absolute inset-0 z-0">
-        <DotPattern variant="hero" />
-      </div>
-
+    <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden bg-[var(--color-background)]">
       <div className="mx-auto max-w-[var(--container-max)] px-8 lg:px-12 grid grid-cols-12 gap-8 relative z-10 w-full">
         <div className="col-span-12 lg:col-span-9 flex flex-col gap-8">
           <AnimatedHeadline
