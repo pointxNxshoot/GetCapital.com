@@ -10,8 +10,8 @@ export async function Header() {
   return (
     <header className="border-b border-[var(--color-border)] bg-[var(--color-background)] sticky top-0 z-50">
       <div className="mx-auto flex h-16 max-w-[var(--container-max)] items-center justify-between px-8 lg:px-12">
-        <Link href="/" className="text-lg font-medium tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
-          Capital
+        <Link href="/" className="font-display font-semibold text-xl lg:text-2xl tracking-tight leading-none text-[var(--color-foreground)] hover:opacity-80 transition-opacity">
+          Get Capital
         </Link>
 
         {/* Desktop nav */}
