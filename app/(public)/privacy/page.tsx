@@ -2,7 +2,7 @@ import { Section } from "@/components/swiss/section";
 import { Headline } from "@/components/swiss/headline";
 
 export const metadata = {
-  title: "Privacy Policy — Capital",
+  title: "Privacy Policy",
 };
 
 export default function PrivacyPage() {

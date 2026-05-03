@@ -1,8 +1,12 @@
 import { ComingSoon } from "@/components/swiss/coming-soon";
 
 export const metadata = {
-  title: "Valuation Tool — Capital",
+  title: "Valuation Tool",
   description: "Get a data-driven business valuation powered by real Australian transaction data.",
+  openGraph: {
+    title: "Valuation Tool — Get Capital",
+    description: "Get a data-driven business valuation powered by real Australian transaction data.",
+  },
 };
 
 export default function ValuationPage() {

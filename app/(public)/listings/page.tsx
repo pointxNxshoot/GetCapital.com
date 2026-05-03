@@ -1,8 +1,12 @@
 import { ComingSoon } from "@/components/swiss/coming-soon";
 
 export const metadata = {
-  title: "Marketplace Listings — Capital",
+  title: "Marketplace Listings",
   description: "Browse quality Australian businesses for sale with verified financials.",
+  openGraph: {
+    title: "Marketplace Listings — Get Capital",
+    description: "Browse quality Australian businesses for sale with verified financials.",
+  },
 };
 
 export default function ListingsPage() {

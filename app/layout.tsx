@@ -18,9 +18,35 @@ const interTight = Inter_Tight({
   weight: ["300", "400", "500", "600"],
 });
 
+const BASE_URL = "https://get-capital.com.au";
+
 export const metadata: Metadata = {
-  title: "Capital — Buy & Sell Australian Businesses",
-  description: "A marketplace connecting Australian SME owners with qualified buyers. Get an instant valuation, list your business, and connect with serious acquirers.",
+  title: {
+    default: "Get Capital — Buy & Sell Australian Businesses",
+    template: "%s — Get Capital",
+  },
+  description: "Australia's marketplace for buying and selling small businesses. Get a data-driven valuation, list confidentially, and connect with verified buyers.",
+  metadataBase: new URL(BASE_URL),
+  openGraph: {
+    type: "website",
+    locale: "en_AU",
+    url: BASE_URL,
+    siteName: "Get Capital",
+    title: "Get Capital — Buy & Sell Australian Businesses",
+    description: "Australia's marketplace for buying and selling small businesses. Get a data-driven valuation, list confidentially, and connect with verified buyers.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Get Capital — Buy & Sell Australian Businesses",
+    description: "Australia's marketplace for buying and selling small businesses.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: BASE_URL,
+  },
 };
 
 export default function RootLayout({

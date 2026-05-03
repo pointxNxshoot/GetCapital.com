@@ -2,8 +2,12 @@ import { Section } from "@/components/swiss/section";
 import { Headline } from "@/components/swiss/headline";
 
 export const metadata = {
-  title: "About — Capital",
+  title: "About",
   description: "Building a better way to buy and sell Australian businesses.",
+  openGraph: {
+    title: "About — Get Capital",
+    description: "Building a better way to buy and sell Australian businesses.",
+  },
 };
 
 export default function AboutPage() {

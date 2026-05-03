@@ -2,7 +2,7 @@ import { Section } from "@/components/swiss/section";
 import { Headline } from "@/components/swiss/headline";
 
 export const metadata = {
-  title: "Terms of Service — Capital",
+  title: "Terms of Service",
 };
 
 export default function TermsPage() {

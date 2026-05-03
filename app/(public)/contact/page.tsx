@@ -3,8 +3,12 @@ import { Headline } from "@/components/swiss/headline";
 import { CTAButton } from "@/components/swiss/cta-button";
 
 export const metadata = {
-  title: "Contact — Capital",
-  description: "Get in touch with the Capital team.",
+  title: "Contact",
+  description: "Get in touch with the Get Capital team.",
+  openGraph: {
+    title: "Contact — Get Capital",
+    description: "Get in touch with the Get Capital team.",
+  },
 };
 
 export default function ContactPage() {
