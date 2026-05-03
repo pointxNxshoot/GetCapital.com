@@ -1,8 +1,7 @@
 import { Section } from "@/components/swiss/section";
 import { Headline } from "@/components/swiss/headline";
-import { CTAButton } from "@/components/swiss/cta-button";
-import { FeatureList } from "@/components/swiss/feature-list";
 import { Hero } from "@/components/swiss/hero";
+import { AnimatedFeatureSection } from "@/components/swiss/animated-feature-section";
 
 export default function HomePage() {
   return (
@@ -11,75 +10,52 @@ export default function HomePage() {
       <Hero />
 
       {/* Section 2: List your business (orange) */}
-      <Section background="orange" number="01">
-        <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-12 lg:col-span-7">
-            <Headline size="lg">
-              List your business in minutes.
-            </Headline>
-            <FeatureList
-              className="mt-12"
-              features={[
-                "Industry-benchmarked valuation",
-                "Confidential listing options",
-                "Direct buyer connections",
-                "Verified financial data",
-              ]}
-            />
-            <CTAButton href="/signup" variant="secondary" className="mt-12">
-              Get started
-            </CTAButton>
-          </div>
-        </div>
-      </Section>
+      <AnimatedFeatureSection
+        background="orange"
+        number="01"
+        headline="List your business in minutes."
+        features={[
+          "Industry-benchmarked valuation",
+          "Confidential listing options",
+          "Direct buyer connections",
+          "Verified financial data",
+        ]}
+        ctaText="Get started"
+        ctaHref="/signup"
+        ctaVariant="secondary"
+      />
 
       {/* Section 3: Reach buyers (purple gradient) */}
-      <Section background="purple-gradient" number="02">
-        <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-12 lg:col-span-7">
-            <Headline size="lg">
-              Reach serious buyers, fast.
-            </Headline>
-            <FeatureList
-              className="mt-12"
-              features={[
-                "Verified buyer profiles",
-                "Industry-matched introductions",
-                "Secure messaging",
-                "NDA-protected sharing",
-              ]}
-            />
-            <CTAButton href="/listings" variant="secondary" className="mt-12">
-              Browse buyers
-            </CTAButton>
-          </div>
-        </div>
-      </Section>
+      <AnimatedFeatureSection
+        background="purple-gradient"
+        number="02"
+        headline="Reach serious buyers, fast."
+        features={[
+          "Verified buyer profiles",
+          "Industry-matched introductions",
+          "Secure messaging",
+          "NDA-protected sharing",
+        ]}
+        ctaText="Browse buyers"
+        ctaHref="/listings"
+        ctaVariant="secondary"
+      />
 
       {/* Section 4: Market data (default) */}
-      <Section number="03">
-        <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-12 lg:col-span-8">
-            <Headline size="lg">
-              Powered by real market data.
-            </Headline>
-            <FeatureList
-              className="mt-12"
-              columns={3}
-              features={[
-                "Live transaction comparables",
-                "Industry-specific benchmarks",
-                "Trust-weighted methodology",
-              ]}
-            />
-            <CTAButton href="/valuation" className="mt-12">
-              See methodology
-            </CTAButton>
-          </div>
-        </div>
-      </Section>
+      <AnimatedFeatureSection
+        number="03"
+        headline="Powered by real market data."
+        features={[
+          "Live transaction comparables",
+          "Industry-specific benchmarks",
+          "Trust-weighted methodology",
+        ]}
+        featureColumns={3}
+        ctaText="See methodology"
+        ctaHref="/valuation"
+      />
 
-      {/* Section 5: FAQ */}
+      {/* Section 5: FAQ — static, no scroll animation */}
       <Section>
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-12 lg:col-span-3">
@@ -112,7 +88,6 @@ export default function HomePage() {
           </div>
         </div>
       </Section>
-
     </main>
   );
 }

@@ -8,6 +8,9 @@ type AnimatedHeadlineProps = {
   as?: "h1" | "h2";
   className?: string;
   delay?: number;
+  stagger?: number;
+  wordDuration?: number;
+  trigger?: "mount" | "inView";
 };
 
 const sizeMap = {
@@ -30,15 +33,15 @@ const leadingMap = {
 
 const containerVariants = {
   hidden: {},
-  visible: (delay: number) => ({
+  visible: (custom: { delay: number; stagger: number }) => ({
     transition: {
-      staggerChildren: 0.06,
-      delayChildren: delay / 1000,
+      staggerChildren: custom.stagger,
+      delayChildren: custom.delay / 1000,
     },
   }),
 };
 
-const wordVariants = {
+const makeWordVariants = (duration: number) => ({
   hidden: {
     opacity: 0,
     y: 20,
@@ -47,11 +50,11 @@ const wordVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.5,
+      duration,
       ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
     },
   },
-};
+});
 
 export function AnimatedHeadline({
   text,
@@ -59,9 +62,13 @@ export function AnimatedHeadline({
   as: Tag = "h1",
   className = "",
   delay = 0,
+  stagger = 0.06,
+  wordDuration = 0.55,
+  trigger = "mount",
 }: AnimatedHeadlineProps) {
   const shouldReduceMotion = useReducedMotion();
   const words = text.split(" ");
+  const wordVariants = makeWordVariants(wordDuration);
 
   const style = {
     fontSize: sizeMap[size],
@@ -70,7 +77,6 @@ export function AnimatedHeadline({
     fontFamily: "var(--font-display)",
   };
 
-  // Static render for reduced motion
   if (shouldReduceMotion) {
     return (
       <Tag className={`font-normal ${className}`} style={style}>
@@ -81,14 +87,25 @@ export function AnimatedHeadline({
 
   const MotionTag = motion.create(Tag);
 
+  const motionProps =
+    trigger === "inView"
+      ? {
+          initial: "hidden" as const,
+          whileInView: "visible" as const,
+          viewport: { once: true, margin: "-20%" },
+        }
+      : {
+          initial: "hidden" as const,
+          animate: "visible" as const,
+        };
+
   return (
     <MotionTag
       className={`font-normal ${className}`}
       style={style}
       variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      custom={delay}
+      custom={{ delay, stagger }}
+      {...motionProps}
     >
       {words.map((word, i) => (
         <motion.span
