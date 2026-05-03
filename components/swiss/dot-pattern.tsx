@@ -21,66 +21,76 @@ const CONFIG = {
     baseOpacity: 0.5,
     activeOpacity: 1,
     rippleIntervalMin: 3000,
-    rippleIntervalMax: 4000,
+    rippleIntervalMax: 5000,
     maxRipples: 2,
-    maxRadius: 6,
+    maxRadius: 12,        // dots away from origin
     edgePadding: 2,
+    wavefrontSpeed: 100,  // ms per dot-spacing
+    bandDuration: 300,    // ms each dot stays illuminated
+    rippleLifetime: 3000, // ms before ripple is garbage-collected
   },
   hero: {
     dotSize: 3,
     spacing: 32,
-    baseOpacity: 0.3,
-    activeOpacity: 0.6,
-    rippleIntervalMin: 5000,
-    rippleIntervalMax: 7000,
+    baseOpacity: 0.5,     // increased from 0.3
+    activeOpacity: 0.75,  // softer peak than footer
+    rippleIntervalMin: 6000,
+    rippleIntervalMax: 9000,
     maxRipples: 1,
-    maxRadius: 6,
+    maxRadius: 8,         // smaller range than footer
     edgePadding: 2,
+    wavefrontSpeed: 130,  // slower wave
+    bandDuration: 400,    // softer edges
+    rippleLifetime: 3500,
   },
 };
 
 const INACTIVE_COLOR = { r: 216, g: 215, b: 210 }; // #D8D7D2
-const ACTIVE_COLOR = { r: 10, g: 10, b: 10 }; // #0A0A0A
+const ACTIVE_COLOR = { r: 10, g: 10, b: 10 };      // #0A0A0A
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * Math.max(0, Math.min(1, t));
 }
 
-function getDotOpacity(
+function getDotState(
   row: number,
   col: number,
   ripples: Ripple[],
   now: number,
   config: (typeof CONFIG)["footer"]
 ): { r: number; g: number; b: number; a: number } {
-  let maxInfluence = 0;
+  let highestIntensity = 0;
 
   for (const ripple of ripples) {
-    const distance = Math.sqrt(
-      (row - ripple.originRow) ** 2 + (col - ripple.originCol) ** 2
-    );
+    const dx = col - ripple.originCol;
+    const dy = row - ripple.originRow;
+    const distanceInDots = Math.sqrt(dx * dx + dy * dy);
 
-    if (distance > config.maxRadius) continue;
+    // Skip dots beyond max ripple radius
+    if (distanceInDots > config.maxRadius) continue;
 
     const ageMs = now - ripple.startedAt;
-    const waveArrivalMs = distance * 100;
-    const timeRelativeToWave = ageMs - waveArrivalMs;
+    const expectedArrivalMs = distanceInDots * config.wavefrontSpeed;
+    const timeRelativeToWave = ageMs - expectedArrivalMs;
 
-    if (timeRelativeToWave > 0 && timeRelativeToWave < 600) {
-      // Active phase — ease in
-      const progress = Math.min(timeRelativeToWave / 200, 1);
-      maxInfluence = Math.max(maxInfluence, progress);
-    } else if (timeRelativeToWave >= 600 && timeRelativeToWave < 1400) {
-      // Fade out phase
-      const fadeProgress = (timeRelativeToWave - 600) / 800;
-      maxInfluence = Math.max(maxInfluence, 1 - fadeProgress);
+    // Dot is illuminated only while wavefront band passes through it
+    if (timeRelativeToWave >= 0 && timeRelativeToWave <= config.bandDuration) {
+      // Distance falloff — dots further from origin are dimmer
+      const distanceFalloff = Math.max(0, 1 - distanceInDots / config.maxRadius);
+
+      // Position within the band — peaks at center (sin curve)
+      const bandPosition = timeRelativeToWave / config.bandDuration;
+      const bandIntensity = Math.sin(bandPosition * Math.PI);
+
+      const totalIntensity = distanceFalloff * bandIntensity;
+      highestIntensity = Math.max(highestIntensity, totalIntensity);
     }
   }
 
-  const r = lerp(INACTIVE_COLOR.r, ACTIVE_COLOR.r, maxInfluence);
-  const g = lerp(INACTIVE_COLOR.g, ACTIVE_COLOR.g, maxInfluence);
-  const b = lerp(INACTIVE_COLOR.b, ACTIVE_COLOR.b, maxInfluence);
-  const a = lerp(config.baseOpacity, config.activeOpacity, maxInfluence);
+  const r = lerp(INACTIVE_COLOR.r, ACTIVE_COLOR.r, highestIntensity);
+  const g = lerp(INACTIVE_COLOR.g, ACTIVE_COLOR.g, highestIntensity);
+  const b = lerp(INACTIVE_COLOR.b, ACTIVE_COLOR.b, highestIntensity);
+  const a = lerp(config.baseOpacity, config.activeOpacity, highestIntensity);
 
   return { r, g, b, a };
 }
@@ -134,7 +144,7 @@ export function DotPattern({ variant, className }: DotPatternProps) {
     let originCol: number;
 
     if (variant === "hero") {
-      // Avoid the text area (left 60%, middle 60% vertically)
+      // Avoid the text area (left 60%, middle vertically)
       const attempts = 20;
       let found = false;
       for (let i = 0; i < attempts; i++) {
@@ -142,7 +152,6 @@ export function DotPattern({ variant, className }: DotPatternProps) {
         originCol = padding + Math.floor(Math.random() * (cols - padding * 2));
         const colPct = originCol / cols;
         const rowPct = originRow / rows;
-        // Avoid the zone where text lives (left 65%, vertical 25%-75%)
         if (colPct > 0.6 || rowPct < 0.2 || rowPct > 0.8) {
           found = true;
           break;
@@ -182,30 +191,30 @@ export function DotPattern({ variant, className }: DotPatternProps) {
     rippleTimerRef.current = setTimeout(() => {
       spawnRipple();
       scheduleNext();
-    }, 1500);
+    }, 2000);
 
     return () => {
       if (rippleTimerRef.current) clearTimeout(rippleTimerRef.current);
     };
   }, [reducedMotion, rows, cols, config, spawnRipple]);
 
-  // Animation loop — update dot colors at ~15fps
+  // Animation loop — update dot colors at ~20fps
   useEffect(() => {
     if (reducedMotion || rows === 0 || cols === 0) return;
 
     function tick() {
       const now = performance.now();
 
-      // Throttle to ~15fps (66ms)
-      if (now - lastUpdateRef.current < 66) {
+      // Throttle to ~20fps (50ms)
+      if (now - lastUpdateRef.current < 50) {
         animFrameRef.current = requestAnimationFrame(tick);
         return;
       }
       lastUpdateRef.current = now;
 
-      // Clean expired ripples (older than 2.5s)
+      // Clean expired ripples
       ripplesRef.current = ripplesRef.current.filter(
-        (r) => now - r.startedAt < 2500
+        (r) => now - r.startedAt < config.rippleLifetime
       );
 
       const svg = svgRef.current;
@@ -217,11 +226,42 @@ export function DotPattern({ variant, className }: DotPatternProps) {
       const circles = svg.querySelectorAll("circle");
       const ripples = ripplesRef.current;
 
+      // Only update dots if there are active ripples (performance optimization)
+      if (ripples.length === 0) {
+        animFrameRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
       circles.forEach((circle) => {
         const row = parseInt(circle.dataset.row || "0");
         const col = parseInt(circle.dataset.col || "0");
-        const { r, g, b, a } = getDotOpacity(row, col, ripples, now, config);
-        circle.setAttribute("fill", `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${a.toFixed(2)})`);
+
+        // Quick distance check — skip dots far from all ripples
+        let nearRipple = false;
+        for (const ripple of ripples) {
+          const dx = Math.abs(col - ripple.originCol);
+          const dy = Math.abs(row - ripple.originRow);
+          if (dx <= config.maxRadius + 1 && dy <= config.maxRadius + 1) {
+            nearRipple = true;
+            break;
+          }
+        }
+
+        if (!nearRipple) {
+          // Reset to base if not already
+          const currentFill = circle.getAttribute("fill");
+          const baseFill = `rgba(${INACTIVE_COLOR.r},${INACTIVE_COLOR.g},${INACTIVE_COLOR.b},${config.baseOpacity.toFixed(2)})`;
+          if (currentFill !== baseFill) {
+            circle.setAttribute("fill", baseFill);
+          }
+          return;
+        }
+
+        const { r, g, b, a } = getDotState(row, col, ripples, now, config);
+        circle.setAttribute(
+          "fill",
+          `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${a.toFixed(2)})`
+        );
       });
 
       animFrameRef.current = requestAnimationFrame(tick);
