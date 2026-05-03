@@ -29,15 +29,17 @@ export function Footer() {
             </ul>
           </div>
         </div>
+      </div>
 
-        <div className="mt-16 overflow-hidden opacity-30">
-          <DotPattern rows={6} columns={40} />
-        </div>
+      {/* Animated dot pattern */}
+      <div className="relative h-64 overflow-hidden">
+        <DotPattern variant="footer" />
+      </div>
 
-        <div className="mt-10 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-[var(--color-border)] pt-8 text-sm text-[var(--color-muted)]">
-          <p>&copy; {new Date().getFullYear()} Capital Pty Ltd. All rights reserved.</p>
-          <p>Registered in Australia</p>
-        </div>
+      {/* Copyright bar */}
+      <div className="mx-auto max-w-[var(--container-max)] px-8 lg:px-12 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-[var(--color-border)] py-6 text-sm text-[var(--color-muted)]">
+        <p>&copy; {new Date().getFullYear()} Capital Pty Ltd. All rights reserved.</p>
+        <p>Registered in Australia</p>
       </div>
     </footer>
   );
