@@ -1,0 +1,1101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// USERS (linked 1:1 to Supabase auth.users)
+// ============================================================
+
+model User {
+  id                      String    @id @db.Uuid
+  email                   String    @unique
+  fullName                String    @map("full_name")
+  role                    String    @default("member") // seller, buyer, admin, member
+  createdAt               DateTime  @default(now()) @map("created_at")
+  profileBio              String?   @map("profile_bio")
+  profilePictureUrl       String?   @map("profile_picture_url")
+  phoneNumber             String?   @map("phone_number")
+  userLocation            String?   @map("user_location")
+  emailVerifiedAt         DateTime? @map("email_verified_at")
+  phoneVerifiedAt         DateTime? @map("phone_verified_at")
+  identityVerifiedAt      DateTime? @map("identity_verified_at")
+  verificationProvider    String?   @map("verification_provider")
+  verificationReferenceId String?   @map("verification_reference_id")
+  buyerType               String?   @map("buyer_type") // individual, pe_fund, first_time, search_fund
+  buyerVerifiedAt         DateTime? @map("buyer_verified_at")
+  proofOfFundsUploadedAt  DateTime? @map("proof_of_funds_uploaded_at")
+  abn                     String?
+  companyName             String?   @map("company_name")
+  isSeller                Boolean   @default(false) @map("is_seller")
+  isBuyer                 Boolean   @default(false) @map("is_buyer")
+  isAdmin                 Boolean   @default(false) @map("is_admin")
+  accountStatus           String    @default("active") @map("account_status") // active, suspended, pending_verification, deleted
+  lastLoginAt             DateTime? @map("last_login_at")
+  deletedAt               DateTime? @map("deleted_at")
+  anonymizedAt            DateTime? @map("anonymized_at")
+  deletionRequestedAt     DateTime? @map("deletion_requested_at")
+  deletionRequestReason   String?   @map("deletion_request_reason")
+  retentionOverride       Float?    @map("retention_override")
+  retentionOverrideReason String?   @map("retention_override_reason")
+
+  // Relations
+  listings              Listing[]
+  financialSubmissions  FinancialSubmission[]   @relation("submitted_by")
+  messagesThreadsAsInquirer MessageThread[]     @relation("inquirer")
+  messagesThreadsAsOwner   MessageThread[]     @relation("thread_owner")
+  messagesSent          Message[]
+  accessGrantsReceived  AccessGrant[]           @relation("grant_recipient")
+  accessGrantsGiven     AccessGrant[]           @relation("grant_giver")
+  ndaSignatures         NdaSignature[]
+  savedListings         SavedListing[]
+  savedSearches         SavedSearch[]
+  notifications         Notification[]
+  payments              Payment[]
+  subscriptions         Subscription[]
+  auditLogs             AuditLog[]              @relation("actor")
+  auditLogsOnBehalf     AuditLog[]              @relation("on_behalf")
+  listingViews          ListingView[]
+  analyticsEvents       AnalyticsEvent[]
+  offersAsAcquirer      Offer[]                 @relation("offer_acquirer")
+  offersAsOwner         Offer[]                 @relation("offer_owner")
+  ddChecklists          DueDiligenceChecklist[]
+  statusHistoryAffected AccountStatusHistory[]  @relation("status_affected")
+  statusHistoryChangedBy AccountStatusHistory[] @relation("status_changer")
+  deletionRequestsSubject DeletionRequest[]     @relation("deletion_subject")
+  deletionRequestsProcessed DeletionRequest[]   @relation("deletion_processor")
+  reviewQueueAssigned   ReviewQueue[]
+  valuationInquiries    ValuationInquiry[]
+
+  @@map("users")
+}
+
+// ============================================================
+// INDUSTRY TAXONOMY
+// ============================================================
+
+model IndustryTaxonomy {
+  industryCode String  @id @map("industry_code")
+  parentCode   String? @map("parent_code")
+  displayName  String  @map("display_name")
+  anzsicCode   String  @map("anzsic_code")
+  description  String
+  isActive     Boolean @default(true) @map("is_active")
+
+  parent   IndustryTaxonomy?  @relation("industry_tree", fields: [parentCode], references: [industryCode])
+  children IndustryTaxonomy[] @relation("industry_tree")
+
+  listings               Listing[]
+  industryBenchmarks     IndustryBenchmark[]
+  comparableTransactions ComparableTransaction[]
+  metricTemplates        IndustryMetricTemplate[]
+  valuationInquiries     ValuationInquiry[]
+
+  @@map("industry_taxonomy")
+}
+
+// ============================================================
+// LISTINGS
+// ============================================================
+
+model Listing {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingOwnerId    String    @map("listing_owner_id") @db.Uuid
+  title             String
+  industry          String    // display label
+  industryCode      String    @map("industry_code")
+  location          String
+  askingPrice       Int       @map("asking_price")
+  descriptionPublic String    @map("description_public")
+  descriptionPrivate String   @map("description_private")
+  status            String    @default("draft") // draft, pending_approval, active, paused, under_offer, sold, withdrawn, rejected
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  pausedAt          DateTime? @map("paused_at")
+  underOfferAt      DateTime? @map("under_offer_at")
+  soldAt            DateTime? @map("sold_at")
+  withdrawnAt       DateTime? @map("withdrawn_at")
+  archivedAt        DateTime? @map("archived_at")
+  approvedAt        DateTime? @map("approved_at")
+  rejectedAt        DateTime? @map("rejected_at")
+  rejectionReason   String?   @map("rejection_reason")
+  finalSalePrice    Float?    @map("final_sale_price")
+  withdrawnReason   String?   @map("withdrawn_reason")
+  viewCountTotal    Int       @default(0) @map("view_count_total")
+  inquiryCountTotal Int       @default(0) @map("inquiry_count_total")
+  aiHighlights      Json?     @map("ai_highlights") // [{icon, title, description}]
+
+  owner              User               @relation(fields: [listingOwnerId], references: [id])
+  industryTaxonomy   IndustryTaxonomy   @relation(fields: [industryCode], references: [industryCode])
+
+  media              ListingMedia[]
+  financialSubmissions FinancialSubmission[]
+  valuationRuns      ValuationRun[]
+  documents          Document[]
+  messageThreads     MessageThread[]
+  accessGrants       AccessGrant[]
+  ndaSignatures      NdaSignature[]
+  savedListings      SavedListing[]
+  listingViews       ListingView[]
+  offers             Offer[]
+  ddChecklists       DueDiligenceChecklist[]
+
+  @@index([status])
+  @@index([industryCode])
+  @@index([askingPrice])
+  @@index([status, industryCode, askingPrice])
+  @@map("listings")
+}
+
+// ============================================================
+// LISTING MEDIA
+// ============================================================
+
+model ListingMedia {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId      String    @map("listing_id") @db.Uuid
+  url            String
+  mediaType      String    @map("media_type") // image, video
+  displayOrder   Int       @default(0) @map("display_order")
+  uploadedAt     DateTime  @default(now()) @map("uploaded_at")
+  deletedAt      DateTime? @map("deleted_at")
+  deletedBy      String?   @map("deleted_by")
+  deletionReason String?   @map("deletion_reason")
+
+  listing Listing @relation(fields: [listingId], references: [id])
+
+  @@map("listing_media")
+}
+
+// ============================================================
+// FINANCIAL SUBMISSIONS
+// ============================================================
+
+model FinancialSubmission {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId      String    @map("listing_id") @db.Uuid
+  periodStart    DateTime  @map("period_start")
+  periodEnd      DateTime  @map("period_end")
+  currency       String    @default("AUD")
+  submittedAt    DateTime  @default(now()) @map("submitted_at")
+  submittedBy    String    @map("submitted_by") @db.Uuid
+  deletedAt      DateTime? @map("deleted_at")
+  deletedBy      String?   @map("deleted_by")
+  deletionReason String?   @map("deletion_reason")
+
+  listing              Listing              @relation(fields: [listingId], references: [id])
+  submitter            User                 @relation("submitted_by", fields: [submittedBy], references: [id])
+  financialLines       FinancialLine[]
+  ebitdaAddbacks       EbitdaAddback[]
+  standardizedFinancials StandardizedFinancial[]
+  submissionMetrics    SubmissionMetric[]
+
+  @@map("financial_submissions")
+}
+
+// ============================================================
+// FINANCIAL LINES (unified: IS, CF, BS)
+// ============================================================
+
+model FinancialLine {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  submissionId   String @map("submission_id") @db.Uuid
+  statementType  String @map("statement_type") // income_statement, cashflow, balance_sheet
+  lineItem       String @map("line_item")
+  amount         Int
+  displayOrder   Int    @default(0) @map("display_order")
+
+  submission FinancialSubmission @relation(fields: [submissionId], references: [id])
+
+  @@index([submissionId, statementType])
+  @@map("financial_lines")
+}
+
+// ============================================================
+// EBITDA ADDBACKS
+// ============================================================
+
+model EbitdaAddback {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  submissionId   String    @map("submission_id") @db.Uuid
+  description    String
+  amount         Int
+  category       String    // owner_compensation, personal_expense, non_recurring, other
+  deletedAt      DateTime? @map("deleted_at")
+  deletedBy      String?   @map("deleted_by")
+  deletionReason String?   @map("deletion_reason")
+
+  submission FinancialSubmission @relation(fields: [submissionId], references: [id])
+
+  @@map("ebitda_addbacks")
+}
+
+// ============================================================
+// STANDARDIZED FINANCIALS
+// ============================================================
+
+model StandardizedFinancial {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  submissionId           String    @map("submission_id") @db.Uuid
+  industryTemplate       String    @map("industry_template")
+  periodStart            DateTime  @map("period_start")
+  periodEnd              DateTime  @map("period_end")
+  revenue                Int
+  cogs                   Float?
+  grossProfit            Float?    @map("gross_profit")
+  operatingExpenses      Float?    @map("operating_expenses")
+  ebitda                 Int
+  ebitdaAdjusted         Int       @map("ebitda_adjusted")
+  industrySpecificMetrics Json     @map("industry_specific_metrics")
+  mappedBy               String    @map("mapped_by") // ai_agent_v1, seller_confirmed
+  mappedAt               DateTime  @map("mapped_at")
+  confidenceScore        Float     @map("confidence_score")
+  reviewedBySeller       Boolean   @default(false) @map("reviewed_by_seller")
+  reviewedAt             DateTime? @map("reviewed_at")
+
+  submission FinancialSubmission @relation(fields: [submissionId], references: [id])
+
+  @@map("standardized_financials")
+}
+
+// ============================================================
+// VALUATION RUNS
+// ============================================================
+
+model ValuationRun {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId             String?   @map("listing_id") @db.Uuid
+  method                String    // SDE Multiple, EBITDA Multiple, ARR Multiple, Revenue Multiple, DCF
+  lowEstimate           Int       @map("low_estimate")
+  highEstimate          Int       @map("high_estimate")
+  baseMetric            String?   @map("base_metric")
+  baseMetricValue       Float?    @map("base_metric_value")
+  multipleLow           Float?    @map("multiple_low")
+  multipleHigh          Float?    @map("multiple_high")
+  assumptions           String?
+  runAt                 DateTime? @default(now()) @map("run_at")
+  benchmarkIdsUsed      String?   @map("benchmark_ids_used") // comma-separated
+  comparableIdsUsed     String?   @map("comparable_ids_used") // comma-separated
+  proprietaryDataWeight Float     @default(0) @map("proprietary_data_weight")
+  modelVersion          String    @default("engine_v1") @map("model_version")
+  engineConfidenceScore Float     @default(0) @map("engine_confidence_score")
+  inputsSummary         String?   @map("inputs_summary")
+
+  listing            Listing?          @relation(fields: [listingId], references: [id])
+  valuationInquiries ValuationInquiry[]
+
+  @@index([listingId, runAt])
+  @@map("valuation_runs")
+}
+
+// ============================================================
+// VALUATION INQUIRIES (public tool submissions)
+// ============================================================
+
+model ValuationInquiry {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  submitterEmail    String    @map("submitter_email")
+  submitterUserId   String?   @map("submitter_user_id") @db.Uuid
+  sessionId         String?   @map("session_id")
+  industryCode      String    @map("industry_code")
+  geography         String    @default("AU")
+  revenue           Int
+  ebitda            Int
+  yearsInOperation  Int       @map("years_in_operation")
+  description       String?
+  valuationRunId    String?   @map("valuation_run_id") @db.Uuid
+  aiInsight         String?   @map("ai_insight")
+  emailSentAt       DateTime? @map("email_sent_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  submitter        User?            @relation(fields: [submitterUserId], references: [id])
+  industryTaxonomy IndustryTaxonomy @relation(fields: [industryCode], references: [industryCode])
+  valuationRun     ValuationRun?    @relation(fields: [valuationRunId], references: [id])
+
+  @@map("valuation_inquiries")
+}
+
+// ============================================================
+// INDUSTRY BENCHMARKS
+// ============================================================
+
+model IndustryBenchmark {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  industryCode             String    @map("industry_code")
+  businessSizeBand         String    @map("business_size_band") // micro, small, medium, large
+  geography                String
+  method                   String    // SDE Multiple, EBITDA Multiple, Revenue Multiple, ARR Multiple
+  multipleLow              Float     @map("multiple_low")
+  multipleMedian           Float     @map("multiple_median")
+  multipleHigh             Float     @map("multiple_high")
+  sampleSize               Int       @map("sample_size")
+  sourceName               String    @map("source_name")
+  sourceUrl                String    @map("source_url")
+  dataYear                 Int       @map("data_year")
+  publishedAt              DateTime  @map("published_at")
+  notes                    String?
+  licenseAllowsDisplay     Boolean   @default(true) @map("license_allows_display")
+  isActive                 Boolean   @default(true) @map("is_active")
+  sourceId                 String    @map("source_id") @db.Uuid
+  recencyScore             Float     @map("recency_score")
+  sourceReliabilityScore   Float     @map("source_reliability_score")
+  sampleSizeConfidence     Float     @map("sample_size_confidence")
+  geographicMatchScore     Float     @map("geographic_match_score")
+  methodologyScore         Float     @map("methodology_score")
+  compositeTrustScore      Float     @map("composite_trust_score")
+  trustScoreComputedAt     DateTime  @map("trust_score_computed_at")
+  trustScoreOverriddenBy   String?   @map("trust_score_overridden_by")
+  trustScoreOverrideReason String?   @map("trust_score_override_reason")
+
+  industry   IndustryTaxonomy @relation(fields: [industryCode], references: [industryCode])
+  dataSource DataSource       @relation(fields: [sourceId], references: [id])
+
+  @@index([industryCode, businessSizeBand, isActive])
+  @@map("industry_benchmarks")
+}
+
+// ============================================================
+// COMPARABLE TRANSACTIONS
+// ============================================================
+
+model ComparableTransaction {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  industryCode             String    @map("industry_code")
+  businessName             String?   @map("business_name")
+  geography                String
+  transactionDate          DateTime  @map("transaction_date")
+  revenueAtSale            Int       @map("revenue_at_sale")
+  ebitdaAtSale             Float?    @map("ebitda_at_sale")
+  sdeAtSale                Float?    @map("sde_at_sale")
+  arrAtSale                Float?    @map("arr_at_sale")
+  salePrice                Int       @map("sale_price")
+  multipleApplied          Float     @map("multiple_applied")
+  baseMetric               String    @map("base_metric")
+  dealStructure            String    @map("deal_structure") // asset_sale, stock_sale, merger
+  sourceType               String    @map("source_type") // platform_internal, broker_report, public_filing
+  sourceReference          String    @map("source_reference")
+  isProprietary            Boolean   @default(false) @map("is_proprietary")
+  displayConsent           Float?    @map("display_consent")
+  verified                 Boolean   @default(false)
+  notes                    String?
+  createdAt                DateTime  @default(now()) @map("created_at")
+  sourceId                 String    @map("source_id") @db.Uuid
+  recencyScore             Float     @map("recency_score")
+  sourceReliabilityScore   Float     @map("source_reliability_score")
+  verificationScore        Float     @map("verification_score")
+  geographicMatchScore     Float     @map("geographic_match_score")
+  proprietaryBonusScore    Float     @map("proprietary_bonus_score")
+  compositeTrustScore      Float     @map("composite_trust_score")
+  trustScoreComputedAt     DateTime  @map("trust_score_computed_at")
+  trustScoreOverriddenBy   String?   @map("trust_score_overridden_by")
+  trustScoreOverrideReason String?   @map("trust_score_override_reason")
+  originatingListingId     String?   @map("originating_listing_id") @db.Uuid
+
+  industry   IndustryTaxonomy @relation(fields: [industryCode], references: [industryCode])
+  dataSource DataSource       @relation(fields: [sourceId], references: [id])
+
+  @@index([industryCode, geography, transactionDate])
+  @@map("comparable_transactions")
+}
+
+// ============================================================
+// DATA SOURCES
+// ============================================================
+
+model DataSource {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceName             String   @map("source_name")
+  sourceType             String   @map("source_type") // industry_research, broker_association_report, government, platform_internal
+  defaultReliabilityScore Float   @map("default_reliability_score")
+  methodologyDisclosed   Boolean  @default(true) @map("methodology_disclosed")
+  methodologyScore       Float    @map("methodology_score")
+  updateFrequency        String   @map("update_frequency") // annual, quarterly, monthly, real_time
+  geographicFocus        String   @map("geographic_focus")
+  notes                  String?
+  lastReviewedAt         DateTime @map("last_reviewed_at")
+
+  benchmarks    IndustryBenchmark[]
+  comparables   ComparableTransaction[]
+
+  @@map("data_sources")
+}
+
+// ============================================================
+// INDUSTRY METRIC TEMPLATES
+// ============================================================
+
+model IndustryMetricTemplate {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  industryCode           String   @map("industry_code")
+  metricCode             String   @map("metric_code")
+  metricLabel            String   @map("metric_label")
+  metricDescription      String   @map("metric_description")
+  metricUnit             String   @map("metric_unit") // percentage, currency_aud, integer, ratio
+  metricCategory         String   @map("metric_category") // operational, customer, financial, growth
+  selectionTier          String   @map("selection_tier") // always_asked, agent_selectable
+  promptPriority         Int      @map("prompt_priority")
+  derivableFromFinancials Boolean @map("derivable_from_financials")
+  valuationRelevance     String   @map("valuation_relevance")
+  typicalRangeLow        Float   @map("typical_range_low")
+  typicalRangeHigh       Float   @map("typical_range_high")
+  isActive               Boolean  @default(true) @map("is_active")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  industry IndustryTaxonomy @relation(fields: [industryCode], references: [industryCode])
+
+  @@index([industryCode, isActive, promptPriority])
+  @@map("industry_metric_templates")
+}
+
+// ============================================================
+// SUBMISSION METRICS
+// ============================================================
+
+model SubmissionMetric {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  submissionId           String    @map("submission_id") @db.Uuid
+  inquiryId              String?   @map("inquiry_id") @db.Uuid
+  metricCode             String    @map("metric_code")
+  metricValue            Float     @map("metric_value")
+  metricUnit             String    @map("metric_unit")
+  selectionTierAtCapture String    @map("selection_tier_at_capture")
+  dataSource             String    @map("data_source") // seller_input, agent_derived, calculated
+  agentSelectionReason   String?   @map("agent_selection_reason")
+  confidenceScore        Float     @map("confidence_score")
+  flaggedForReview       Boolean   @default(false) @map("flagged_for_review")
+  capturedAt             DateTime  @default(now()) @map("captured_at")
+  notes                  String?
+
+  submission FinancialSubmission @relation(fields: [submissionId], references: [id])
+
+  @@map("submission_metrics")
+}
+
+// ============================================================
+// DOCUMENTS (DATA ROOM)
+// ============================================================
+
+model Document {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId     String    @map("listing_id") @db.Uuid
+  filename      String
+  storagePath   String    @map("storage_path")
+  docType       String    @map("doc_type") // CIM, tax_return, lease, contract, financial_report, other
+  requiresNda   Boolean   @default(true) @map("requires_nda")
+  uploadedAt    DateTime  @default(now()) @map("uploaded_at")
+  archivedAt    DateTime? @map("archived_at")
+  archivedBy    String?   @map("archived_by")
+  archiveReason String?   @map("archive_reason")
+  contextType   String    @default("listing") @map("context_type")
+  contextId     String    @map("context_id")
+
+  listing    Listing             @relation(fields: [listingId], references: [id])
+  accessLogs DocumentAccessLog[]
+
+  @@map("documents")
+}
+
+// ============================================================
+// DOCUMENT ACCESS LOG
+// ============================================================
+
+model DocumentAccessLog {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId      String   @map("document_id") @db.Uuid
+  accessingUserId String   @map("accessing_user_id") @db.Uuid
+  accessedAt      DateTime @default(now()) @map("accessed_at")
+  ipAddress       String   @map("ip_address")
+
+  document Document @relation(fields: [documentId], references: [id])
+
+  @@index([documentId, accessedAt])
+  @@map("document_access_log")
+}
+
+// ============================================================
+// ACCESS GRANTS
+// ============================================================
+
+model AccessGrant {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId       String    @map("listing_id") @db.Uuid
+  acquirerId      String    @map("acquirer_id") @db.Uuid
+  grantedByUserId String    @map("granted_by_user_id") @db.Uuid
+  grantedAt       DateTime  @default(now()) @map("granted_at")
+  revokedAt       DateTime? @map("revoked_at")
+
+  listing   Listing @relation(fields: [listingId], references: [id])
+  acquirer  User    @relation("grant_recipient", fields: [acquirerId], references: [id])
+  grantedBy User    @relation("grant_giver", fields: [grantedByUserId], references: [id])
+
+  @@unique([listingId, acquirerId])
+  @@map("access_grants")
+}
+
+// ============================================================
+// MESSAGE THREADS
+// ============================================================
+
+model MessageThread {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId            String    @map("listing_id") @db.Uuid
+  inquirerId           String    @map("inquirer_id") @db.Uuid
+  listingOwnerId       String    @map("listing_owner_id") @db.Uuid
+  status               String    @default("pending") // pending, approved, rejected
+  createdAt            DateTime  @default(now()) @map("created_at")
+  lastMessageAt        DateTime  @default(now()) @map("last_message_at")
+  deletedAt            DateTime? @map("deleted_at")
+  deletedBy            String?   @map("deleted_by")
+  archivedByInquirerAt DateTime? @map("archived_by_inquirer_at")
+  archivedByOwnerAt    DateTime? @map("archived_by_owner_at")
+
+  listing  Listing   @relation(fields: [listingId], references: [id])
+  inquirer User      @relation("inquirer", fields: [inquirerId], references: [id])
+  owner    User      @relation("thread_owner", fields: [listingOwnerId], references: [id])
+  messages Message[]
+  offers   Offer[]
+
+  @@unique([listingId, inquirerId])
+  @@map("message_threads")
+}
+
+// ============================================================
+// MESSAGES
+// ============================================================
+
+model Message {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  threadId         String    @map("thread_id") @db.Uuid
+  senderId         String?   @map("sender_id") @db.Uuid
+  body             String
+  isInitialMessage Boolean   @default(false) @map("is_initial_message")
+  messageType      String    @default("user") @map("message_type") // user, system
+  sentAt           DateTime  @default(now()) @map("sent_at")
+  readAt           DateTime? @map("read_at")
+  deletedAt        DateTime? @map("deleted_at")
+  editedAt         DateTime? @map("edited_at")
+
+  thread      MessageThread       @relation(fields: [threadId], references: [id])
+  sender      User?               @relation(fields: [senderId], references: [id])
+  attachments MessageAttachment[]
+
+  @@index([threadId, sentAt])
+  @@map("messages")
+}
+
+// ============================================================
+// MESSAGE ATTACHMENTS
+// ============================================================
+
+model MessageAttachment {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  messageId      String    @map("message_id") @db.Uuid
+  fileUrl        String    @map("file_url")
+  filename       String
+  fileType       String    @map("file_type")
+  mimeType       String    @map("mime_type")
+  virusScannedAt DateTime  @map("virus_scanned_at")
+  scanResult     String?   @map("scan_result")
+  fileSizeBytes  Int?      @map("file_size_bytes")
+  uploadedAt     DateTime? @map("uploaded_at")
+  deletedAt      DateTime? @map("deleted_at")
+  deletedBy      String?   @map("deleted_by")
+  deletionReason String?   @map("deletion_reason")
+
+  message Message @relation(fields: [messageId], references: [id])
+
+  @@map("message_attachments")
+}
+
+// ============================================================
+// NDA SIGNATURES
+// ============================================================
+
+model NdaSignature {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId       String   @map("listing_id") @db.Uuid
+  signingUserId   String   @map("signing_user_id") @db.Uuid
+  signedAt        DateTime @default(now()) @map("signed_at")
+  legalDocumentId String   @map("legal_document_id") @db.Uuid
+  ipAddress       String   @map("ip_address")
+
+  listing       Listing       @relation(fields: [listingId], references: [id])
+  signingUser   User          @relation(fields: [signingUserId], references: [id])
+  legalDocument LegalDocument @relation(fields: [legalDocumentId], references: [id])
+
+  @@map("nda_signatures")
+}
+
+// ============================================================
+// LEGAL DOCUMENTS
+// ============================================================
+
+model LegalDocument {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentType    String    @map("document_type") // nda, terms_of_service, privacy_policy
+  version         String
+  contentUrl      String    @map("content_url")
+  effectiveFrom   DateTime  @map("effective_from")
+  effectiveUntil  DateTime? @map("effective_until")
+  supersededById  String?   @map("superseded_by_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at")
+  notes           String?
+
+  supersededBy LegalDocument?  @relation("legal_doc_versions", fields: [supersededById], references: [id])
+  supersedes   LegalDocument[] @relation("legal_doc_versions")
+  ndaSignatures NdaSignature[]
+
+  @@map("legal_documents")
+}
+
+// ============================================================
+// OFFERS
+// ============================================================
+
+model Offer {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId           String    @map("listing_id") @db.Uuid
+  acquirerId          String    @map("acquirer_id") @db.Uuid
+  listingOwnerId      String    @map("listing_owner_id") @db.Uuid
+  threadId            String?   @map("thread_id") @db.Uuid
+  offerAmount         Int       @map("offer_amount")
+  offerType           String    @map("offer_type") // non_binding_loi, binding_offer
+  dealStructure       String    @map("deal_structure") // asset_sale, stock_sale, merger
+  paymentStructure    String    @map("payment_structure") // cash_at_close, cash_plus_earnout, cash_plus_rollover_equity, seller_financing
+  cashAtClose         Int       @map("cash_at_close")
+  earnoutAmount       Float?    @map("earnout_amount")
+  earnoutTerms        String?   @map("earnout_terms")
+  sellerFinancingAmount Float?  @map("seller_financing_amount")
+  contingencies       String
+  expirationDate      DateTime  @map("expiration_date")
+  status              String    @default("submitted") // submitted, accepted, rejected, countered, withdrawn, expired
+  submittedAt         DateTime  @default(now()) @map("submitted_at")
+  respondedAt         DateTime? @map("responded_at")
+  responseNotes       String?   @map("response_notes")
+  attachedDocumentId  String?   @map("attached_document_id") @db.Uuid
+  withdrawnAt         DateTime? @map("withdrawn_at")
+  withdrawalReason    String?   @map("withdrawal_reason")
+
+  listing  Listing       @relation(fields: [listingId], references: [id])
+  acquirer User          @relation("offer_acquirer", fields: [acquirerId], references: [id])
+  owner    User          @relation("offer_owner", fields: [listingOwnerId], references: [id])
+  thread   MessageThread? @relation(fields: [threadId], references: [id])
+  ddChecklists DueDiligenceChecklist[]
+
+  @@map("offers")
+}
+
+// ============================================================
+// DUE DILIGENCE CHECKLISTS
+// ============================================================
+
+model DueDiligenceChecklist {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId        String    @map("listing_id") @db.Uuid
+  acquirerId       String    @map("acquirer_id") @db.Uuid
+  offerId          String    @map("offer_id") @db.Uuid
+  templateName     String    @map("template_name")
+  category         String    // financial, legal, operational, technical, commercial
+  itemLabel        String    @map("item_label")
+  status           String    @default("not_started") // not_started, in_progress, complete, blocked
+  assignedTo       String    @map("assigned_to") // buyer, seller, platform
+  requestedAt      DateTime? @map("requested_at")
+  completedAt      DateTime? @map("completed_at")
+  completionNotes  String?   @map("completion_notes")
+  linkedDocumentId String?   @map("linked_document_id") @db.Uuid
+  priority         String    @default("should_have") // must_have, should_have, nice_to_have
+  deletedAt        DateTime? @map("deleted_at")
+  deletedBy        String?   @map("deleted_by")
+
+  listing  Listing @relation(fields: [listingId], references: [id])
+  acquirer User    @relation(fields: [acquirerId], references: [id])
+  offer    Offer   @relation(fields: [offerId], references: [id])
+
+  @@map("due_diligence_checklists")
+}
+
+// ============================================================
+// SAVED LISTINGS (watchlist)
+// ============================================================
+
+model SavedListing {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  saverUserId String    @map("saver_user_id") @db.Uuid
+  listingId   String    @map("listing_id") @db.Uuid
+  savedAt     DateTime  @default(now()) @map("saved_at")
+  notes       String?
+  removedAt   DateTime? @map("removed_at")
+
+  saver   User    @relation(fields: [saverUserId], references: [id])
+  listing Listing @relation(fields: [listingId], references: [id])
+
+  @@unique([saverUserId, listingId])
+  @@map("saved_listings")
+}
+
+// ============================================================
+// SAVED SEARCHES
+// ============================================================
+
+model SavedSearch {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  searcherUserId  String    @map("searcher_user_id") @db.Uuid
+  name            String
+  criteria        Json
+  notifyFrequency String    @map("notify_frequency") // instant, daily_digest, weekly_digest
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  lastNotifiedAt  DateTime? @map("last_notified_at")
+  matchCountTotal Int       @default(0) @map("match_count_total")
+  deletedAt       DateTime? @map("deleted_at")
+
+  searcher User @relation(fields: [searcherUserId], references: [id])
+
+  @@map("saved_searches")
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipientUserId  String    @map("recipient_user_id") @db.Uuid
+  notificationType String    @map("notification_type") // inquiry_received, access_granted, listing_approved, valuation_complete, message_received
+  channel          String    // in_app, email
+  entityType       String    @map("entity_type")
+  entityId         String    @map("entity_id")
+  title            String
+  body             String
+  readAt           DateTime? @map("read_at")
+  sentAt           DateTime  @default(now()) @map("sent_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  dismissedAt      DateTime? @map("dismissed_at")
+
+  recipient User @relation(fields: [recipientUserId], references: [id])
+
+  @@index([recipientUserId, readAt])
+  @@map("notifications")
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id                       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actingUserId             String   @map("acting_user_id") @db.Uuid
+  action                   String   // listing.created, financials.submitted, inquiry.created, access.granted, etc.
+  entityType               String   @map("entity_type")
+  entityId                 String   @map("entity_id")
+  metadata                 Json?
+  createdAt                DateTime @default(now()) @map("created_at")
+  eventCategory            String   @map("event_category") // data_modification, deal_flow, auth, admin
+  severity                 String   @default("info") // info, warning, critical
+  changedFields            Json?    @map("changed_fields")
+  ipAddress                String   @map("ip_address")
+  userAgent                String   @map("user_agent")
+  sessionId                String   @map("session_id")
+  actingOnBehalfOfUserId   String?  @map("acting_on_behalf_of_user_id") @db.Uuid
+  requestId                String   @map("request_id")
+
+  actor     User  @relation("actor", fields: [actingUserId], references: [id])
+  onBehalf  User? @relation("on_behalf", fields: [actingOnBehalfOfUserId], references: [id])
+
+  @@index([actingUserId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_log")
+}
+
+// ============================================================
+// LISTING VIEWS
+// ============================================================
+
+model ListingView {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId           String    @map("listing_id") @db.Uuid
+  viewerUserId        String?   @map("viewer_user_id") @db.Uuid
+  sessionId           String    @map("session_id")
+  ipAddress           String    @map("ip_address")
+  userAgent           String    @map("user_agent")
+  referrer            String?
+  viewDurationSeconds Int       @default(0) @map("view_duration_seconds")
+  viewedAt            DateTime  @default(now()) @map("viewed_at")
+
+  listing Listing @relation(fields: [listingId], references: [id])
+  viewer  User?   @relation(fields: [viewerUserId], references: [id])
+
+  @@index([listingId, viewedAt])
+  @@map("listing_views")
+}
+
+// ============================================================
+// ANALYTICS EVENTS
+// ============================================================
+
+model AnalyticsEvent {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  sessionId  String   @map("session_id")
+  eventName  String   @map("event_name") // search_performed, listing_viewed, inquiry_submitted, valuation_requested
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  properties Json
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([eventName, createdAt])
+  @@map("analytics_events")
+}
+
+// ============================================================
+// REVIEW QUEUE (admin moderation)
+// ============================================================
+
+model ReviewQueue {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType       String    @map("entity_type") // addback, financial_submission, listing, message
+  entityId         String    @map("entity_id")
+  flagType         String    @map("flag_type") // addback_suspicious, financial_anomaly, content_report, listing_quality
+  severity         String    // low, medium, high, critical
+  flaggedBy        String    @map("flagged_by") // agent_v1, rule_engine, user_report
+  flagReason       String    @map("flag_reason")
+  autoActionTaken  String    @default("none") @map("auto_action_taken")
+  status           String    @default("pending_review") // pending_review, in_review, resolved_no_action, resolved_action_taken
+  assignedToUserId String?   @map("assigned_to_user_id") @db.Uuid
+  resolvedAt       DateTime? @map("resolved_at")
+  resolutionNotes  String?   @map("resolution_notes")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  assignedTo User? @relation(fields: [assignedToUserId], references: [id])
+
+  @@index([status, severity])
+  @@map("review_queue")
+}
+
+// ============================================================
+// PAYMENTS
+// ============================================================
+
+model Payment {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payingUserId        String?   @map("paying_user_id") @db.Uuid
+  paymentType         String    @map("payment_type") // listing_fee, subscription, data_export, premium_feature
+  entityType          String    @map("entity_type")
+  entityId            String    @map("entity_id")
+  amount              Int
+  currency            String    @default("AUD")
+  paymentMethod       String    @map("payment_method") // card, bank_transfer
+  paymentProcessor    String    @map("payment_processor") // stripe
+  processorReference  String    @map("processor_reference")
+  status              String    @default("pending") // pending, completed, failed, refunded
+  paidAt              DateTime? @map("paid_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  notes               String?
+  externalCustomerId  String?   @map("external_customer_id") @db.Uuid
+
+  payingUser       User?             @relation(fields: [payingUserId], references: [id])
+  externalCustomer ExternalCustomer? @relation(fields: [externalCustomerId], references: [id])
+  dataExports      DataExport[]
+
+  @@map("payments")
+}
+
+// ============================================================
+// SUBSCRIPTION PLANS
+// ============================================================
+
+model SubscriptionPlan {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  tier          String   // free, premium
+  priceAmount   Int      @map("price_amount")
+  currency      String   @default("AUD")
+  billingPeriod String   @map("billing_period") // monthly, annual
+  features      Json
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  notes         String?
+
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+// ============================================================
+// SUBSCRIPTIONS
+// ============================================================
+
+model Subscription {
+  id                             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subscriberUserId               String    @map("subscriber_user_id") @db.Uuid
+  planId                         String    @map("plan_id") @db.Uuid
+  startedAt                      DateTime  @map("started_at")
+  currentPeriodStart             DateTime  @map("current_period_start")
+  currentPeriodEnd               DateTime  @map("current_period_end")
+  autoRenew                      Boolean   @default(true) @map("auto_renew")
+  status                         String    @default("active") // active, past_due, canceled, expired
+  canceledAt                     DateTime? @map("canceled_at")
+  cancellationReason             String?   @map("cancellation_reason")
+  paymentProcessorSubscriptionId String    @map("payment_processor_subscription_id")
+  createdAt                      DateTime  @default(now()) @map("created_at")
+  updatedAt                      DateTime  @updatedAt @map("updated_at")
+
+  subscriber User             @relation(fields: [subscriberUserId], references: [id])
+  plan       SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@map("subscriptions")
+}
+
+// ============================================================
+// EXTERNAL CUSTOMERS (data product buyers)
+// ============================================================
+
+model ExternalCustomer {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String
+  customerType        String   @map("customer_type") // pe_firm, industry_research, academic, broker
+  primaryContactName  String   @map("primary_contact_name")
+  primaryContactEmail String   @map("primary_contact_email")
+  phone               String?
+  country             String
+  taxId               String?  @map("tax_id")
+  notes               String?
+  createdAt           DateTime @default(now()) @map("created_at")
+  lastPurchaseAt      DateTime? @map("last_purchase_at")
+  totalLifetimeValue  Int      @default(0) @map("total_lifetime_value")
+  isActive            Boolean  @default(true) @map("is_active")
+
+  payments    Payment[]
+  dataExports DataExport[]
+
+  @@map("external_customers")
+}
+
+// ============================================================
+// DATA EXPORTS
+// ============================================================
+
+model DataExport {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerName          String   @map("customer_name")
+  customerContactEmail  String   @map("customer_contact_email")
+  purpose               String   // pe_research, industry_analysis, academic_research
+  dataCategories        String   @map("data_categories")
+  filterCriteria        Json     @map("filter_criteria")
+  recordCount           Int      @map("record_count")
+  includedProprietaryData Boolean @map("included_proprietary_data")
+  anonymizationLevel    String   @map("anonymization_level") // fully_anonymized, aggregated_only
+  licensingTerms        String   @map("licensing_terms") // one_time_use, annual_license
+  priceCharged          Int      @map("price_charged")
+  paymentId             String?  @map("payment_id") @db.Uuid
+  deliveredAt           DateTime @map("delivered_at")
+  expiresAt             DateTime @map("expires_at")
+  notes                 String?
+  externalCustomerId    String   @map("external_customer_id") @db.Uuid
+
+  payment          Payment?         @relation(fields: [paymentId], references: [id])
+  externalCustomer ExternalCustomer @relation(fields: [externalCustomerId], references: [id])
+  records          DataExportRecord[]
+
+  @@map("data_exports")
+}
+
+// ============================================================
+// DATA EXPORT RECORDS
+// ============================================================
+
+model DataExportRecord {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  exportId             String   @map("export_id") @db.Uuid
+  recordType           String   @map("record_type") // comparable_transaction, benchmark
+  recordId             String   @map("record_id")
+  includedAt           DateTime @map("included_at")
+  anonymizationApplied String   @map("anonymization_applied")
+
+  export DataExport @relation(fields: [exportId], references: [id])
+
+  @@map("data_export_records")
+}
+
+// ============================================================
+// ACCOUNT STATUS HISTORY
+// ============================================================
+
+model AccountStatusHistory {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  affectedUserId  String   @map("affected_user_id") @db.Uuid
+  previousStatus  String   @map("previous_status")
+  newStatus       String   @map("new_status")
+  changeReason    String   @map("change_reason")
+  changedByUserId String   @map("changed_by_user_id") @db.Uuid
+  changedAt       DateTime @default(now()) @map("changed_at")
+  notes           String?
+
+  affectedUser User @relation("status_affected", fields: [affectedUserId], references: [id])
+  changedBy    User @relation("status_changer", fields: [changedByUserId], references: [id])
+
+  @@map("account_status_history")
+}
+
+// ============================================================
+// RETENTION POLICIES (config/reference)
+// ============================================================
+
+model RetentionPolicy {
+  id                       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tableName                String   @map("table_name")
+  dataCategory             String   @map("data_category")
+  retentionPeriodMonths    String   @map("retention_period_months") // number or "indefinite"
+  retentionBasis           String   @map("retention_basis") // legal_requirement, business_need, consent
+  legalReference           String?  @map("legal_reference")
+  deletionMethod           String   @map("deletion_method") // hard_delete, retain_with_anonymization, archive
+  triggeringTimestampColumn String  @map("triggering_timestamp_column")
+  legalHoldOverride        Boolean  @default(false) @map("legal_hold_override")
+  policyText               String   @map("policy_text")
+  lastReviewedAt           DateTime @map("last_reviewed_at")
+  nextReviewDueAt          DateTime @map("next_review_due_at")
+  policyOwner              String   @map("policy_owner")
+  notes                    String?
+
+  @@map("retention_policies")
+}
+
+// ============================================================
+// DELETION REQUESTS
+// ============================================================
+
+model DeletionRequest {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subjectUserId       String    @map("subject_user_id") @db.Uuid
+  requestedAt         DateTime  @default(now()) @map("requested_at")
+  requestSource       String    @map("request_source") // support_email, user_self_service, gdpr_form
+  requestReason       String    @map("request_reason")
+  legalBasis          String    @map("legal_basis") // privacy_act_au, user_request, gdpr
+  verificationMethod  String    @map("verification_method") // email_confirmation, login_session, identity_doc_match
+  verifiedAt          DateTime? @map("verified_at")
+  status              String    @default("pending") // pending, in_grace_period, processing, complete, rejected, on_legal_hold
+  gracePeriodEndsAt   DateTime? @map("grace_period_ends_at")
+  processingStartedAt DateTime? @map("processing_started_at")
+  completedAt         DateTime? @map("completed_at")
+  completionMethod    String?   @map("completion_method") // anonymized, hard_deleted, rejected
+  affectedTables      String?   @map("affected_tables")
+  rejectionReason     String?   @map("rejection_reason")
+  legalHoldUntil      DateTime? @map("legal_hold_until")
+  legalHoldReason     String?   @map("legal_hold_reason")
+  processedByUserId   String?   @map("processed_by_user_id") @db.Uuid
+  notes               String?
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  subjectUser User  @relation("deletion_subject", fields: [subjectUserId], references: [id])
+  processedBy User? @relation("deletion_processor", fields: [processedByUserId], references: [id])
+
+  @@map("deletion_requests")
+}

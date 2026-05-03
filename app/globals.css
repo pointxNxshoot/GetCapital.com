@@ -1,26 +1,135 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  /* Fonts */
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-inter-tight), var(--font-inter), sans-serif;
   --font-mono: var(--font-geist-mono);
+
+  /* Swiss design tokens — warm-tinted neutrals */
+  --color-background: #F5F5F2;
+  --color-foreground: #0A0A0A;
+  --color-muted: #8C8C88;
+  --color-muted-foreground: #5C5C58;
+  --color-border: #E5E5E0;
+  --color-input: #E5E5E0;
+  --color-ring: #0A0A0A;
+
+  /* Primary = near-black (Swiss style: dark buttons on light backgrounds) */
+  --color-primary: #0A0A0A;
+  --color-primary-foreground: #F5F5F2;
+
+  /* Secondary */
+  --color-secondary: #F0F0EC;
+  --color-secondary-foreground: #0A0A0A;
+
+  /* Card */
+  --color-card: #FFFFFF;
+  --color-card-foreground: #0A0A0A;
+
+  /* Popover */
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #0A0A0A;
+
+  /* Accent colours — saturated, for full-section backgrounds */
+  --color-accent-orange: #FF6A00;
+  --color-accent-purple: #5B5FBC;
+  --color-accent-peach: #E89370;
+
+  /* shadcn accent (used by shadcn components) */
+  --color-accent: #F0F0EC;
+  --color-accent-foreground: #0A0A0A;
+
+  /* Destructive */
+  --color-destructive: #DC2626;
+
+  /* Dot pattern */
+  --color-dot-inactive: #D8D7D2;
+  --color-dot-active: #0A0A0A;
+
+  /* Display typography — Swiss-style fluid scaling */
+  --font-size-display-xl: clamp(4rem, 10vw, 9rem);
+  --font-size-display-lg: clamp(3rem, 7vw, 6rem);
+  --font-size-display-md: clamp(2rem, 5vw, 4rem);
+  --font-size-section-number: clamp(4rem, 10vw, 8rem);
+
+  /* Spacing — generous Swiss layout */
+  --spacing-section: 8rem;
+  --spacing-section-sm: 5rem;
+  --spacing-section-lg: 12rem;
+
+  /* Container */
+  --container-max: 1440px;
+
+  /* Radius — minimal (Swiss = sharp corners) */
+  --radius: 0rem;
+  --radius-sm: 0rem;
+  --radius-md: 0rem;
+  --radius-lg: 0rem;
+  --radius-xl: 0rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 0rem;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  /* Display headlines use display font */
+  h1, h2, h3 {
+    font-family: var(--font-display);
+  }
+
+  * {
+    @apply border-border outline-ring/50;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Swiss-style square bullet */
+  .square-bullet::before {
+    content: "";
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: currentColor;
+    margin-right: 0.75rem;
+    vertical-align: middle;
+    transform: translateY(-1px);
+  }
 }
+
+/* Staggered reveal animation — used on hero elements */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-reveal {
+  animation: reveal-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+
+.animate-delay-1 { animation-delay: 0.1s; }
+.animate-delay-2 { animation-delay: 0.25s; }
+.animate-delay-3 { animation-delay: 0.4s; }
+.animate-delay-4 { animation-delay: 0.55s; }
