@@ -2,29 +2,13 @@ import { Section } from "@/components/swiss/section";
 import { Headline } from "@/components/swiss/headline";
 import { CTAButton } from "@/components/swiss/cta-button";
 import { FeatureList } from "@/components/swiss/feature-list";
+import { Hero } from "@/components/swiss/hero";
 
 export default function HomePage() {
   return (
     <main>
-      {/* Section 1: Hero */}
-      <Section className="py-[var(--spacing-section-lg)]">
-        <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-12 lg:col-span-8">
-            <div className="animate-reveal animate-delay-1">
-              <Headline size="xl" as="h1">
-                Find what your business is really worth.
-              </Headline>
-            </div>
-            <p className="animate-reveal animate-delay-2 mt-8 max-w-xl text-lg text-[var(--color-muted-foreground)]">
-              Data-driven valuations, qualified buyers, and secure deal flow — built for Australian business owners.
-            </p>
-            <div className="animate-reveal animate-delay-3 mt-12 flex flex-wrap gap-4">
-              <CTAButton href="/valuation">Value your business</CTAButton>
-              <CTAButton href="/listings" variant="outline">Browse listings</CTAButton>
-            </div>
-          </div>
-        </div>
-      </Section>
+      {/* Section 1: Hero — animated, client component */}
+      <Hero />
 
       {/* Section 2: List your business (orange) */}
       <Section background="orange" number="01">

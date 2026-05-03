@@ -112,7 +112,7 @@
   }
 }
 
-/* Staggered reveal animation — used on hero elements */
+/* Staggered reveal animation — used on non-hero elements */
 @keyframes reveal-up {
   from {
     opacity: 0;
@@ -133,3 +133,42 @@
 .animate-delay-2 { animation-delay: 0.25s; }
 .animate-delay-3 { animation-delay: 0.4s; }
 .animate-delay-4 { animation-delay: 0.55s; }
+
+/* Background breath — barely-there (default) */
+@keyframes breath-drift {
+  0%, 100% {
+    transform: translate(-3%, -3%);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translate(3%, 3%);
+    opacity: 0.35;
+  }
+}
+
+/* Background breath — subtle (for testing) */
+@keyframes breath-drift-subtle {
+  0%, 100% {
+    transform: translate(-5%, -4%);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate(5%, 4%);
+    opacity: 0.5;
+  }
+}
+
+.animate-breath {
+  animation: breath-drift 14s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-breath-subtle {
+  animation: breath-drift-subtle 12s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-breath,
+  .animate-breath-subtle {
+    animation: none;
+  }
+}
