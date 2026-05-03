@@ -16,8 +16,8 @@ type Ripple = {
 
 const CONFIG = {
   footer: {
-    dotSize: 4,
-    spacing: 24,
+    dotSize: 7,
+    spacing: 28,
     baseOpacity: 0.5,
     activeOpacity: 1,
     rippleIntervalMin: 3000,
@@ -31,9 +31,9 @@ const CONFIG = {
     mode: "smooth" as const,
   },
   hero: {
-    dotSize: 5,            // Change 2: larger dots
-    spacing: 36,           // Change 2: wider spacing
-    baseOpacity: 0.5,
+    dotSize: 6,
+    spacing: 40,
+    baseOpacity: 0.55,
     activeOpacity: 0.75,
     rippleIntervalMin: 6000,
     rippleIntervalMax: 9000,
@@ -99,9 +99,11 @@ function getDotStateFooter(
     const t = ageMs - arrivalMs;
 
     if (t >= 0 && t <= config.bandDuration) {
-      const falloff = Math.max(0, 1 - dist / config.maxRadius);
+      // Wave proximity — how close to wavefront
       const band = smoothIntensity(t, config.bandDuration);
-      highestIntensity = Math.max(highestIntensity, falloff * band);
+      // Radial gradient — inner rings stronger, outer rings fade
+      const distanceFalloff = Math.max(0.15, 1 - Math.pow(dist / config.maxRadius, 1.5));
+      highestIntensity = Math.max(highestIntensity, band * distanceFalloff);
     }
   }
 
@@ -133,10 +135,11 @@ function getDotStateHero(
     const t = ageMs - arrivalMs;
 
     if (t >= 0 && t <= config.bandDuration) {
-      // Change 4B: steep exponential falloff — most dissipation in last third
-      const falloff = Math.pow(Math.max(0, 1 - dist / config.maxRadius), 1.5);
+      // Shutter illumination
       const band = shutterIntensity(t, config.bandDuration);
-      highestIntensity = Math.max(highestIntensity, falloff * band);
+      // Radial gradient — steeper falloff than footer, floor of 0.15
+      const distanceFalloff = Math.max(0.15, 1 - Math.pow(dist / config.maxRadius, 1.5));
+      highestIntensity = Math.max(highestIntensity, band * distanceFalloff);
     }
   }
 
