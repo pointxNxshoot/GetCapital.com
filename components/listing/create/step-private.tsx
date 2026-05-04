@@ -29,7 +29,7 @@ export function StepPrivate({ draft, updateDraft, onNext, onBack }: Props) {
             onChange={(e) => updateDraft({ description_private: e.target.value })}
             placeholder="The full story — operations, customers, competitive position, growth opportunities, risks. This is what serious buyers read."
             rows={6}
-            className="w-full border border-[var(--color-border)] bg-transparent p-3 text-base outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-foreground)] resize-none"
+            className="w-full border border-[var(--color-border)] bg-white p-3 text-base outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-foreground)] resize-none cursor-text"
           />
         </div>
 
@@ -40,7 +40,7 @@ export function StepPrivate({ draft, updateDraft, onNext, onBack }: Props) {
             onChange={(e) => updateDraft({ reason_for_sale: e.target.value })}
             placeholder="e.g. Relocating to Melbourne, retiring, pursuing a new venture"
             rows={2}
-            className="w-full border border-[var(--color-border)] bg-transparent p-3 text-base outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-foreground)] resize-none"
+            className="w-full border border-[var(--color-border)] bg-white p-3 text-base outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-foreground)] resize-none cursor-text"
           />
         </div>
 
@@ -51,7 +51,7 @@ export function StepPrivate({ draft, updateDraft, onNext, onBack }: Props) {
             onChange={(e) => updateDraft({ inclusions: e.target.value })}
             placeholder="e.g. All equipment, existing inventory, lease assignment, customer database, brand/IP, training period"
             rows={3}
-            className="w-full border border-[var(--color-border)] bg-transparent p-3 text-base outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-foreground)] resize-none"
+            className="w-full border border-[var(--color-border)] bg-white p-3 text-base outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-foreground)] resize-none cursor-text"
           />
         </div>
 
@@ -60,7 +60,7 @@ export function StepPrivate({ draft, updateDraft, onNext, onBack }: Props) {
           <select
             value={draft.deal_structure}
             onChange={(e) => updateDraft({ deal_structure: e.target.value })}
-            className="w-full border-b border-[var(--color-border)] bg-transparent py-3 text-base outline-none transition-colors focus:border-[var(--color-foreground)]"
+            className="w-full border-b border-[var(--color-border)] bg-white py-3 text-base outline-none transition-colors focus:border-[var(--color-foreground)] cursor-pointer"
           >
             <option value="">No preference</option>
             <option value="asset_sale">Asset sale</option>

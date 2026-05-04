@@ -69,68 +69,83 @@ const EMPTY_DRAFT: ListingDraft = {
 export function Wizard() {
   const router = useRouter();
   const [step, setStep] = useState(1);
+  const [highestStep, setHighestStep] = useState(1);
   const [draft, setDraft] = useState<ListingDraft>(EMPTY_DRAFT);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const updateDraft = useCallback((updates: Partial<ListingDraft>) => {
     setDraft((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  // Save draft to DB
-  const saveDraft = useCallback(async (updates?: Partial<ListingDraft>) => {
+  // Save draft to DB — errors are silent (logged, not shown to user)
+  const saveDraft = useCallback(async () => {
     setSaving(true);
-    setError(null);
-    const current = updates ? { ...draft, ...updates } : draft;
 
     try {
-      if (!current.id) {
-        // Create new listing
+      if (!draft.id) {
         const res = await fetch("/api/listings", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            title: current.title,
-            industry: current.industry,
-            industry_code: current.industry_code,
-            location: current.location,
-            asking_price: current.asking_price,
-            description_public: current.description_public,
-            description_private: current.description_private,
+            title: draft.title || "Untitled listing",
+            industry: draft.industry,
+            industry_code: draft.industry_code || "other",
+            location: draft.location,
+            asking_price: draft.asking_price,
+            description_public: draft.description_public,
+            description_private: draft.description_private,
           }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        updateDraft({ id: data.id, ...updates });
+        if (res.ok && data.id) {
+          setDraft((prev) => ({ ...prev, id: data.id }));
+        } else {
+          console.warn("[wizard] Draft create failed:", data.error);
+        }
       } else {
-        // Update existing
         const res = await fetch("/api/listings", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            id: current.id,
-            title: current.title,
-            industry: current.industry,
-            industry_code: current.industry_code,
-            location: current.location,
-            asking_price: current.asking_price,
-            description_public: current.description_public,
-            description_private: current.description_private,
+            id: draft.id,
+            title: draft.title,
+            industry: draft.industry,
+            industry_code: draft.industry_code,
+            location: draft.location,
+            asking_price: draft.asking_price,
+            description_public: draft.description_public,
+            description_private: draft.description_private,
+            reason_for_sale: draft.reason_for_sale,
+            inclusions: draft.inclusions,
+            deal_structure: draft.deal_structure,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+        if (!res.ok) {
+          const data = await res.json();
+          console.warn("[wizard] Draft update failed:", data.error);
+        }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
+      console.warn("[wizard] Draft save error:", err);
     } finally {
       setSaving(false);
     }
-  }, [draft, updateDraft]);
+  }, [draft]);
+
+  const goToStep = useCallback((target: number) => {
+    if (target <= highestStep) {
+      setStep(target);
+    }
+  }, [highestStep]);
 
   const nextStep = useCallback(async () => {
     await saveDraft();
-    setStep((s) => Math.min(s + 1, 6));
+    setStep((s) => {
+      const next = Math.min(s + 1, 6);
+      setHighestStep((h) => Math.max(h, next));
+      return next;
+    });
   }, [saveDraft]);
 
   const prevStep = useCallback(() => {
@@ -138,9 +153,12 @@ export function Wizard() {
   }, []);
 
   const submitListing = useCallback(async () => {
-    if (!draft.id) return;
+    if (!draft.id) {
+      setSubmitError("Please complete all steps before submitting.");
+      return;
+    }
     setSaving(true);
-    setError(null);
+    setSubmitError(null);
 
     try {
       const res = await fetch("/api/listings", {
@@ -152,7 +170,7 @@ export function Wizard() {
       if (!res.ok) throw new Error(data.error);
       router.push("/dashboard?submitted=true");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit");
+      setSubmitError(err instanceof Error ? err.message : "Failed to submit. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -166,13 +184,13 @@ export function Wizard() {
           {STEPS.map((s) => (
             <button
               key={s.id}
-              onClick={() => s.id <= step && setStep(s.id)}
+              onClick={() => goToStep(s.id)}
               className={`text-xs font-medium uppercase tracking-wider transition-colors ${
                 s.id === step
                   ? "text-[var(--color-foreground)]"
-                  : s.id < step
+                  : s.id <= highestStep
                     ? "text-[var(--color-muted-foreground)] cursor-pointer hover:text-[var(--color-foreground)]"
-                    : "text-[var(--color-border)]"
+                    : "text-[var(--color-border)] cursor-default"
               }`}
             >
               {s.label}
@@ -187,12 +205,9 @@ export function Wizard() {
         </div>
       </div>
 
-      {/* Status */}
+      {/* Saving indicator — subtle, not alarming */}
       {saving && (
         <p className="text-xs text-[var(--color-muted)] mb-4">Saving...</p>
-      )}
-      {error && (
-        <p className="text-sm text-red-600 mb-4">{error}</p>
       )}
 
       {/* Steps */}
@@ -201,7 +216,7 @@ export function Wizard() {
       {step === 3 && <StepFinancials draft={draft} updateDraft={updateDraft} onNext={nextStep} onBack={prevStep} />}
       {step === 4 && <StepAddbacks draft={draft} updateDraft={updateDraft} onNext={nextStep} onBack={prevStep} />}
       {step === 5 && <StepPrivate draft={draft} updateDraft={updateDraft} onNext={nextStep} onBack={prevStep} />}
-      {step === 6 && <StepReview draft={draft} onSubmit={submitListing} onBack={prevStep} saving={saving} />}
+      {step === 6 && <StepReview draft={draft} onSubmit={submitListing} onBack={prevStep} saving={saving} error={submitError} />}
     </div>
   );
 }

@@ -7,9 +7,10 @@ type Props = {
   onSubmit: () => void;
   onBack: () => void;
   saving: boolean;
+  error?: string | null;
 };
 
-export function StepReview({ draft, onSubmit, onBack, saving }: Props) {
+export function StepReview({ draft, onSubmit, onBack, saving, error }: Props) {
   const latestFinancials = draft.financials[0];
   const addbackTotal = draft.addbacks.reduce((sum, a) => sum + (a.amount || 0), 0);
 
@@ -87,6 +88,10 @@ export function StepReview({ draft, onSubmit, onBack, saving }: Props) {
           {draft.deal_structure && <Row label="Deal structure" value={draft.deal_structure.replace("_", " ")} />}
         </ReviewBlock>
       </div>
+
+      {error && (
+        <p className="text-sm text-red-600 pt-4">{error}</p>
+      )}
 
       <div className="flex justify-between pt-4 border-t border-[var(--color-border)]">
         <button

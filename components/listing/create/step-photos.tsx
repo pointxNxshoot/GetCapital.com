@@ -12,16 +12,34 @@ type Props = {
 
 export function StepPhotos({ draft, updateDraft, onNext, onBack }: Props) {
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleUpload(files: FileList) {
-    if (!draft.id) return;
+    if (!draft.id) {
+      setUploadError("Please complete the Basics step first so we can save your listing.");
+      return;
+    }
     setUploading(true);
+    setUploadError(null);
 
     const newMedia = [...draft.media];
 
     for (let i = 0; i < files.length && newMedia.length < 9; i++) {
       const file = files[i];
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setUploadError(`"${file.name}" is not an image file.`);
+        continue;
+      }
+
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setUploadError(`"${file.name}" is too large. Maximum 10MB per image.`);
+        continue;
+      }
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("listing_id", draft.id);
@@ -32,9 +50,11 @@ export function StepPhotos({ draft, updateDraft, onNext, onBack }: Props) {
         const data = await res.json();
         if (res.ok) {
           newMedia.push({ id: data.id, url: data.url });
+        } else {
+          setUploadError(data.error || "Upload failed. Please try again.");
         }
-      } catch (err) {
-        console.error("Upload failed:", err);
+      } catch {
+        setUploadError("Network error. Please check your connection and try again.");
       }
     }
 
@@ -58,6 +78,11 @@ export function StepPhotos({ draft, updateDraft, onNext, onBack }: Props) {
         </p>
       </div>
 
+      {/* Error message */}
+      {uploadError && (
+        <p className="text-sm text-red-600">{uploadError}</p>
+      )}
+
       {/* Upload area */}
       <div
         onClick={() => fileInputRef.current?.click()}
@@ -72,15 +97,18 @@ export function StepPhotos({ draft, updateDraft, onNext, onBack }: Props) {
           {uploading ? "Uploading..." : "Click or drag photos here"}
         </p>
         <p className="text-sm text-[var(--color-muted)] mt-2">
-          {draft.media.length}/9 photos added
+          JPG, PNG, or WebP. Max 10MB each. {draft.media.length}/9 added.
         </p>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
           multiple
           className="hidden"
-          onChange={(e) => e.target.files && handleUpload(e.target.files)}
+          onChange={(e) => {
+            if (e.target.files) handleUpload(e.target.files);
+            e.target.value = ""; // Reset so same file can be re-selected
+          }}
         />
       </div>
 
@@ -100,7 +128,7 @@ export function StepPhotos({ draft, updateDraft, onNext, onBack }: Props) {
                 </span>
               )}
               <button
-                onClick={() => handleRemove(m.id)}
+                onClick={(e) => { e.stopPropagation(); handleRemove(m.id); }}
                 className="absolute top-2 right-2 bg-[var(--color-foreground)] text-[var(--color-background)] w-6 h-6 flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 &times;

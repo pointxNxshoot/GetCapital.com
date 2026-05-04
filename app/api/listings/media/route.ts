@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
+
+// Service role client for storage operations (bypasses RLS)
+const adminSupabase = createServiceClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 // POST: Upload media for a listing
 export async function POST(request: Request) {
@@ -20,7 +27,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing listing_id or file" }, { status: 400 });
     }
 
-    // Verify ownership
+    // Verify ownership via user's authenticated client
     const { data: listing } = await supabase
       .from("listings")
       .select("id")
@@ -32,26 +39,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     }
 
-    // Upload to Supabase Storage
+    // Convert file to buffer for upload
+    const buffer = Buffer.from(await file.arrayBuffer());
     const ext = file.name.split(".").pop() || "jpg";
-    const path = `listings/${listingId}/${Date.now()}.${ext}`;
+    const path = `listings/${listingId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    const { error: uploadError } = await supabase.storage
+    // Upload using admin client (service role bypasses storage RLS)
+    const { error: uploadError } = await adminSupabase.storage
       .from("listing-media")
-      .upload(path, file, { contentType: file.type });
+      .upload(path, buffer, {
+        contentType: file.type,
+        upsert: false,
+      });
 
     if (uploadError) {
       console.error("Upload error:", uploadError);
-      return NextResponse.json({ error: "Failed to upload" }, { status: 500 });
+      return NextResponse.json(
+        { error: `Upload failed: ${uploadError.message}` },
+        { status: 500 }
+      );
     }
 
     // Get public URL
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = adminSupabase.storage
       .from("listing-media")
       .getPublicUrl(path);
 
-    // Insert media record
-    const { data: media, error: dbError } = await supabase
+    // Insert media record using admin client
+    const { data: media, error: dbError } = await adminSupabase
       .from("listing_media")
       .insert({
         listing_id: listingId,
@@ -64,13 +79,19 @@ export async function POST(request: Request) {
 
     if (dbError) {
       console.error("Media DB error:", dbError);
-      return NextResponse.json({ error: "Failed to save media record" }, { status: 500 });
+      return NextResponse.json(
+        { error: `Failed to save: ${dbError.message}` },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ id: media.id, url: media.url });
   } catch (err) {
     console.error("Media POST error:", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -91,8 +112,8 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Missing media id" }, { status: 400 });
     }
 
-    // Soft delete
-    await supabase
+    // Soft delete using admin client
+    await adminSupabase
       .from("listing_media")
       .update({ deleted_at: new Date().toISOString(), deleted_by: user.id })
       .eq("id", mediaId);
