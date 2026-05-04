@@ -89,8 +89,9 @@ export function Wizard() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: draft.title || "Untitled listing",
-            industry: draft.industry,
+            industry: draft.industry_code === "other" ? draft.industry : draft.industry,
             industry_code: draft.industry_code || "other",
+            industry_other_text: draft.industry_code === "other" ? draft.industry : null,
             location: draft.location,
             asking_price: draft.asking_price,
             description_public: draft.description_public,
@@ -110,8 +111,9 @@ export function Wizard() {
           body: JSON.stringify({
             id: draft.id,
             title: draft.title,
-            industry: draft.industry,
+            industry: draft.industry_code === "other" ? draft.industry : draft.industry,
             industry_code: draft.industry_code,
+            industry_other_text: draft.industry_code === "other" ? draft.industry : null,
             location: draft.location,
             asking_price: draft.asking_price,
             description_public: draft.description_public,
