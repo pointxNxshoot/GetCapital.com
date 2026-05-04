@@ -104,7 +104,7 @@ export function Wizard() {
           setDraft((prev) => ({ ...prev, id: data.id }));
           return true;
         } else {
-          console.error("[wizard] Draft create failed:", data.error);
+          console.error("[wizard] Draft create failed:", JSON.stringify(data));
           setSubmitError(data.error || "Failed to save listing. Please try again.");
           return false;
         }
@@ -129,7 +129,8 @@ export function Wizard() {
         });
         if (!res.ok) {
           const data = await res.json();
-          console.error("[wizard] Draft update failed:", data.error);
+          console.error("[wizard] Draft update failed:", JSON.stringify(data));
+          setSubmitError(data.error || "Failed to save changes. Please try again.");
           return false;
         }
       }
