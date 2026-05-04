@@ -78,9 +78,10 @@ export function Wizard() {
     setDraft((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  // Save draft to DB — errors are silent (logged, not shown to user)
-  const saveDraft = useCallback(async () => {
+  // Save draft to DB — returns true on success, false on failure
+  const saveDraft = useCallback(async (): Promise<boolean> => {
     setSaving(true);
+    setSubmitError(null);
 
     try {
       if (!draft.id) {
@@ -101,8 +102,11 @@ export function Wizard() {
         const data = await res.json();
         if (res.ok && data.id) {
           setDraft((prev) => ({ ...prev, id: data.id }));
+          return true;
         } else {
-          console.warn("[wizard] Draft create failed:", data.error);
+          console.error("[wizard] Draft create failed:", data.error);
+          setSubmitError(data.error || "Failed to save listing. Please try again.");
+          return false;
         }
       } else {
         const res = await fetch("/api/listings", {
@@ -125,11 +129,15 @@ export function Wizard() {
         });
         if (!res.ok) {
           const data = await res.json();
-          console.warn("[wizard] Draft update failed:", data.error);
+          console.error("[wizard] Draft update failed:", data.error);
+          return false;
         }
       }
+      return true;
     } catch (err) {
-      console.warn("[wizard] Draft save error:", err);
+      console.error("[wizard] Draft save error:", err);
+      setSubmitError("Network error. Please check your connection and try again.");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -142,7 +150,8 @@ export function Wizard() {
   }, [highestStep]);
 
   const nextStep = useCallback(async () => {
-    await saveDraft();
+    const success = await saveDraft();
+    if (!success) return; // Stay on current step if save failed
     setStep((s) => {
       const next = Math.min(s + 1, 6);
       setHighestStep((h) => Math.max(h, next));
@@ -210,6 +219,11 @@ export function Wizard() {
       {/* Saving indicator — subtle, not alarming */}
       {saving && (
         <p className="text-xs text-[var(--color-muted)] mb-4">Saving...</p>
+      )}
+
+      {/* Error from save/submit — shown on any step */}
+      {submitError && step !== 6 && (
+        <p className="text-sm text-red-600 mb-4">{submitError}</p>
       )}
 
       {/* Steps */}
