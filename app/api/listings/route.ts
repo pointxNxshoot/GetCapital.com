@@ -44,8 +44,11 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      console.error("Create listing error:", error);
-      return NextResponse.json({ error: "Failed to create listing" }, { status: 500 });
+      console.error("Create listing error:", JSON.stringify(error, null, 2));
+      return NextResponse.json(
+        { error: `Failed to create listing: ${error.message}`, code: error.code, details: error.details },
+        { status: 500 }
+      );
     }
 
     // Mark user as seller if not already
