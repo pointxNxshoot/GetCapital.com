@@ -145,8 +145,11 @@ export async function PATCH(request: Request) {
       .eq("listing_owner_id", user.id);
 
     if (error) {
-      console.error("Update listing error:", error);
-      return NextResponse.json({ error: "Failed to save" }, { status: 500 });
+      console.error("Update listing error:", JSON.stringify(error, null, 2));
+      return NextResponse.json(
+        { error: `Failed to save: ${error.message}`, code: error.code },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ success: true });

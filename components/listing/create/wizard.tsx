@@ -151,7 +151,7 @@ export function Wizard() {
 
   const nextStep = useCallback(async () => {
     const success = await saveDraft();
-    if (!success) return; // Stay on current step if save failed
+    if (!success) return;
     setStep((s) => {
       const next = Math.min(s + 1, 6);
       setHighestStep((h) => Math.max(h, next));
