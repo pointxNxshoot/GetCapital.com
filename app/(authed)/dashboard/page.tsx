@@ -184,7 +184,7 @@ export default async function DashboardPage() {
         <div className="mx-auto max-w-[var(--container-max)] px-8 lg:px-12">
           <div className="grid grid-cols-12 gap-8 lg:gap-12">
             {/* Action 1: Listings */}
-            <div className="col-span-12 lg:col-span-4">
+            <div className="col-span-12 lg:col-span-4 flex flex-col h-full">
               <p className="text-sm uppercase tracking-wider text-[var(--color-muted)] mb-4">01</p>
               <h2
                 className="text-3xl tracking-tight leading-none mb-4"
@@ -198,13 +198,15 @@ export default async function DashboardPage() {
                   : "Get your business in front of qualified buyers. Start by creating a listing."
                 }
               </p>
-              <CTAButton href={userListings.length > 0 ? "/dashboard" : "/listings/create"}>
-                {userListings.length > 0 ? "View listings" : "Create listing"}
-              </CTAButton>
+              <div className="mt-auto">
+                <CTAButton href={userListings.length > 0 ? "/dashboard" : "/listings/create"}>
+                  {userListings.length > 0 ? "View listings" : "Create listing"}
+                </CTAButton>
+              </div>
             </div>
 
             {/* Action 2: Saved listings */}
-            <div className="col-span-12 lg:col-span-4">
+            <div className="col-span-12 lg:col-span-4 flex flex-col h-full">
               <p className="text-sm uppercase tracking-wider text-[var(--color-muted)] mb-4">02</p>
               <h2
                 className="text-3xl tracking-tight leading-none mb-4"
@@ -215,13 +217,15 @@ export default async function DashboardPage() {
               <p className="text-base text-[var(--color-muted-foreground)] mb-8 max-w-sm">
                 Businesses you&apos;re tracking on the marketplace. Get notified when key details change.
               </p>
-              <CTAButton href="/listings" variant="outline">
-                {(savedCount || 0) > 0 ? `View ${savedCount} saved` : "Browse marketplace"}
-              </CTAButton>
+              <div className="mt-auto">
+                <CTAButton href="/listings" variant="outline">
+                  {(savedCount || 0) > 0 ? `View ${savedCount} saved` : "Browse marketplace"}
+                </CTAButton>
+              </div>
             </div>
 
             {/* Action 3: Inquiries */}
-            <div className="col-span-12 lg:col-span-4">
+            <div className="col-span-12 lg:col-span-4 flex flex-col h-full">
               <p className="text-sm uppercase tracking-wider text-[var(--color-muted)] mb-4">03</p>
               <h2
                 className="text-3xl tracking-tight leading-none mb-4"
@@ -235,9 +239,11 @@ export default async function DashboardPage() {
                   : "Buyer inquiries on your listings appear here."
                 }
               </p>
-              <CTAButton href="/dashboard/inquiries" variant="outline">
-                View inquiries
-              </CTAButton>
+              <div className="mt-auto">
+                <CTAButton href="/dashboard/inquiries" variant="outline">
+                  View inquiries
+                </CTAButton>
+              </div>
             </div>
           </div>
         </div>
