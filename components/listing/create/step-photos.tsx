@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import type { ListingDraft } from "./wizard";
+import { WizardStepHeading, WizardActions } from "./form-fields";
 
 type Props = {
   draft: ListingDraft;
@@ -13,6 +14,7 @@ type Props = {
 export function StepPhotos({ draft, updateDraft, onNext, onBack }: Props) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleUpload(files: FileList) {
@@ -27,14 +29,10 @@ export function StepPhotos({ draft, updateDraft, onNext, onBack }: Props) {
 
     for (let i = 0; i < files.length && newMedia.length < 9; i++) {
       const file = files[i];
-
-      // Validate file type
       if (!file.type.startsWith("image/")) {
         setUploadError(`"${file.name}" is not an image file.`);
         continue;
       }
-
-      // Validate file size (10MB)
       if (file.size > 10 * 1024 * 1024) {
         setUploadError(`"${file.name}" is too large. Maximum 10MB per image.`);
         continue;
@@ -68,30 +66,30 @@ export function StepPhotos({ draft, updateDraft, onNext, onBack }: Props) {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-normal tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
-          Photos
-        </h2>
-        <p className="mt-2 text-sm text-[var(--color-muted-foreground)]">
-          Add up to 9 photos. The first image becomes the hero on your listing.
-        </p>
-      </div>
+    <div>
+      <WizardStepHeading
+        title="Photos"
+        description="Add up to 9 photos. The first image becomes the hero on your listing."
+      />
 
-      {/* Error message */}
       {uploadError && (
-        <p className="text-sm text-red-600">{uploadError}</p>
+        <p className="text-sm text-red-600 mb-6">{uploadError}</p>
       )}
 
-      {/* Upload area */}
       <div
         onClick={() => fileInputRef.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
         onDrop={(e) => {
           e.preventDefault();
+          setDragOver(false);
           if (e.dataTransfer.files.length > 0) handleUpload(e.dataTransfer.files);
         }}
-        className="border-2 border-dashed border-[var(--color-border)] p-12 text-center cursor-pointer hover:border-[var(--color-muted)] transition-colors"
+        className={`border-2 border-dashed p-16 text-center cursor-pointer transition-colors ${
+          dragOver
+            ? "border-[var(--color-accent-orange)] bg-[var(--color-accent-orange)]/5"
+            : "border-[var(--color-border)] hover:border-[var(--color-muted)]"
+        }`}
       >
         <p className="text-base text-[var(--color-muted-foreground)]">
           {uploading ? "Uploading..." : "Click or drag photos here"}
@@ -107,24 +105,19 @@ export function StepPhotos({ draft, updateDraft, onNext, onBack }: Props) {
           className="hidden"
           onChange={(e) => {
             if (e.target.files) handleUpload(e.target.files);
-            e.target.value = ""; // Reset so same file can be re-selected
+            e.target.value = "";
           }}
         />
       </div>
 
-      {/* Photo grid */}
       {draft.media.length > 0 && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-4 mt-8">
           {draft.media.map((m, i) => (
             <div key={m.id} className="relative group aspect-[4/3]">
-              <img
-                src={m.url}
-                alt={`Photo ${i + 1}`}
-                className="w-full h-full object-cover"
-              />
+              <img src={m.url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
               {i === 0 && (
-                <span className="absolute top-2 left-2 bg-[var(--color-foreground)] text-[var(--color-background)] text-xs px-2 py-1 font-medium">
-                  Hero
+                <span className="absolute top-2 left-2 bg-[var(--color-accent-orange)] text-white text-xs px-2 py-1 font-medium uppercase tracking-wider">
+                  Primary
                 </span>
               )}
               <button
@@ -138,20 +131,7 @@ export function StepPhotos({ draft, updateDraft, onNext, onBack }: Props) {
         </div>
       )}
 
-      <div className="flex justify-between pt-4">
-        <button
-          onClick={onBack}
-          className="text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
-        >
-          Back
-        </button>
-        <button
-          onClick={onNext}
-          className="rounded-full bg-[var(--color-foreground)] px-10 py-3 text-base font-medium text-[var(--color-background)] transition-all hover:bg-[var(--color-foreground)]/90"
-        >
-          Save &amp; continue
-        </button>
-      </div>
+      <WizardActions onBack={onBack} onNext={onNext} />
     </div>
   );
 }

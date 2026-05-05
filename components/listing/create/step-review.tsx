@@ -15,32 +15,39 @@ export function StepReview({ draft, onSubmit, onBack, saving, error }: Props) {
   const addbackTotal = draft.addbacks.reduce((sum, a) => sum + (a.amount || 0), 0);
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-normal tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
-          Review your listing
+    <div>
+      <div className="mb-12">
+        <h2
+          className="tracking-tight leading-none mb-4"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "var(--font-size-display-md)",
+            letterSpacing: "-0.02em",
+            lineHeight: "1.05",
+          }}
+        >
+          Review your listing.
         </h2>
-        <p className="mt-2 text-sm text-[var(--color-muted-foreground)]">
+        <p className="text-base text-[var(--color-muted-foreground)] max-w-xl">
           Check everything looks right. Once submitted, your listing goes to our review queue.
         </p>
       </div>
 
-      {/* Summary blocks */}
-      <div className="space-y-6 divide-y divide-[var(--color-border)]">
-        <ReviewBlock label="Business">
+      <div className="space-y-0">
+        <ReviewBlock label="Business" complete={!!draft.title}>
           <Row label="Name" value={draft.title} />
-          <Row label="Industry" value={draft.industry} />
+          <Row label="Industry" value={draft.industry || draft.industry_code} />
           <Row label="Location" value={draft.location} />
-          <Row label="Asking price" value={`$${draft.asking_price?.toLocaleString()}`} />
+          <Row label="Asking price" value={`$${draft.asking_price?.toLocaleString("en-AU")}`} />
         </ReviewBlock>
 
-        <ReviewBlock label="Public description">
+        <ReviewBlock label="Public description" complete={!!draft.description_public}>
           <p className="text-sm text-[var(--color-muted-foreground)]">
             {draft.description_public || "Not provided"}
           </p>
         </ReviewBlock>
 
-        <ReviewBlock label="Photos">
+        <ReviewBlock label="Photos" complete={draft.media.length > 0}>
           {draft.media.length > 0 ? (
             <div className="grid grid-cols-4 gap-2">
               {draft.media.map((m, i) => (
@@ -52,16 +59,16 @@ export function StepReview({ draft, onSubmit, onBack, saving, error }: Props) {
           )}
         </ReviewBlock>
 
-        <ReviewBlock label="Financials (most recent year)">
+        <ReviewBlock label="Financials" complete={!!latestFinancials?.revenue}>
           {latestFinancials ? (
             <>
-              <Row label="Revenue" value={`$${latestFinancials.revenue?.toLocaleString()}`} />
-              <Row label="COGS" value={`$${latestFinancials.cogs?.toLocaleString()}`} />
-              <Row label="Gross profit" value={`$${latestFinancials.gross_profit?.toLocaleString()}`} />
-              <Row label="Opex" value={`$${latestFinancials.opex?.toLocaleString()}`} />
-              <Row label="EBITDA" value={`$${latestFinancials.ebitda?.toLocaleString()}`} highlight />
+              <Row label="Revenue" value={`$${latestFinancials.revenue?.toLocaleString("en-AU")}`} />
+              <Row label="COGS" value={`$${latestFinancials.cogs?.toLocaleString("en-AU")}`} />
+              <Row label="Gross profit" value={`$${latestFinancials.gross_profit?.toLocaleString("en-AU")}`} />
+              <Row label="Opex" value={`$${latestFinancials.opex?.toLocaleString("en-AU")}`} />
+              <Row label="EBITDA" value={`$${latestFinancials.ebitda?.toLocaleString("en-AU")}`} highlight />
               {addbackTotal > 0 && (
-                <Row label="Adjusted EBITDA" value={`$${(latestFinancials.ebitda + addbackTotal).toLocaleString()}`} highlight />
+                <Row label="Adjusted EBITDA" value={`$${(latestFinancials.ebitda + addbackTotal).toLocaleString("en-AU")}`} highlight />
               )}
             </>
           ) : (
@@ -70,15 +77,15 @@ export function StepReview({ draft, onSubmit, onBack, saving, error }: Props) {
         </ReviewBlock>
 
         {draft.addbacks.length > 0 && (
-          <ReviewBlock label={`Addbacks (${draft.addbacks.length})`}>
+          <ReviewBlock label={`Addbacks (${draft.addbacks.length})`} complete>
             {draft.addbacks.map((a, i) => (
-              <Row key={i} label={a.description} value={`$${a.amount?.toLocaleString()}`} />
+              <Row key={i} label={a.description} value={`$${a.amount?.toLocaleString("en-AU")}`} />
             ))}
-            <Row label="Total" value={`$${addbackTotal.toLocaleString()}`} highlight />
+            <Row label="Total" value={`$${addbackTotal.toLocaleString("en-AU")}`} highlight />
           </ReviewBlock>
         )}
 
-        <ReviewBlock label="Private details">
+        <ReviewBlock label="Private details" complete={!!draft.description_private}>
           {draft.description_private ? (
             <p className="text-sm text-[var(--color-muted-foreground)] line-clamp-4">{draft.description_private}</p>
           ) : (
@@ -90,20 +97,20 @@ export function StepReview({ draft, onSubmit, onBack, saving, error }: Props) {
       </div>
 
       {error && (
-        <p className="text-sm text-red-600 pt-4">{error}</p>
+        <p className="text-sm text-red-600 mt-8">{error}</p>
       )}
 
-      <div className="flex justify-between pt-4 border-t border-[var(--color-border)]">
+      <div className="border-t border-[var(--color-border)] pt-8 mt-16 flex items-center justify-between">
         <button
           onClick={onBack}
-          className="text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
+          className="text-base text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
         >
-          Back
+          &larr; Back
         </button>
         <button
           onClick={onSubmit}
           disabled={saving}
-          className="rounded-full bg-[var(--color-foreground)] px-10 py-3 text-base font-medium text-[var(--color-background)] transition-all hover:bg-[var(--color-foreground)]/90 disabled:opacity-50"
+          className="rounded-full bg-[var(--color-foreground)] px-12 py-4 text-base font-medium text-[var(--color-background)] transition-all hover:bg-[var(--color-foreground)]/90 disabled:opacity-50"
         >
           {saving ? "Submitting..." : "Submit for review"}
         </button>
@@ -112,10 +119,15 @@ export function StepReview({ draft, onSubmit, onBack, saving, error }: Props) {
   );
 }
 
-function ReviewBlock({ label, children }: { label: string; children: React.ReactNode }) {
+function ReviewBlock({ label, complete, children }: { label: string; complete?: boolean; children: React.ReactNode }) {
   return (
-    <div className="pt-6 first:pt-0">
-      <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted)] mb-3">{label}</p>
+    <div className="py-8 border-b border-[var(--color-border)] first:pt-0">
+      <div className="flex items-center gap-2 mb-4">
+        {complete && (
+          <span className="inline-block w-2 h-2 rounded-full bg-[var(--color-accent-orange)]" />
+        )}
+        <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted)]">{label}</p>
+      </div>
       <div className="space-y-2">{children}</div>
     </div>
   );

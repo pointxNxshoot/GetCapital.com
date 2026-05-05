@@ -1,6 +1,7 @@
 "use client";
 
 import type { ListingDraft } from "./wizard";
+import { WizardInput, WizardSelect, WizardTextarea, CurrencyInput, WizardStepHeading, WizardActions } from "./form-fields";
 
 const AU_STATES = ["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"];
 
@@ -25,7 +26,6 @@ type Props = {
 };
 
 export function StepBasics({ draft, updateDraft, onNext }: Props) {
-  const selectedIndustry = INDUSTRIES.find((i) => i.value === draft.industry_code);
   const canProceed =
     draft.title.trim() &&
     draft.industry_code &&
@@ -34,114 +34,79 @@ export function StepBasics({ draft, updateDraft, onNext }: Props) {
     draft.asking_price > 0;
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-normal tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
-          Business basics
-        </h2>
-        <p className="mt-2 text-sm text-[var(--color-muted-foreground)]">
-          Start with the essentials. You can always edit these later.
-        </p>
-      </div>
+    <div>
+      <WizardStepHeading
+        title="Business basics"
+        description="Start with the essentials. You can always edit these later."
+      />
 
-      <div className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">Business name</label>
-          <input
-            type="text"
-            value={draft.title}
-            onChange={(e) => updateDraft({ title: e.target.value })}
-            placeholder="e.g. Brew Haven Coffee"
-            className="w-full border-b border-[var(--color-border)] bg-transparent py-3 text-base outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-foreground)]"
-          />
-        </div>
+      <div className="space-y-8">
+        <WizardInput
+          label="Business name"
+          value={draft.title}
+          onChange={(e) => updateDraft({ title: e.target.value })}
+          placeholder="e.g. Brew Haven Coffee"
+        />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Industry</label>
-          <select
-            value={draft.industry_code}
-            onChange={(e) => {
-              const val = e.target.value;
-              const selected = INDUSTRIES.find((i) => i.value === val);
-              updateDraft({
-                industry_code: val,
-                industry: val === "other" ? draft.industry : (selected?.label || ""),
-              });
-            }}
-            className="w-full border-b border-[var(--color-border)] bg-white py-3 text-base outline-none transition-colors focus:border-[var(--color-foreground)] cursor-pointer"
-          >
-            <option value="">Select an industry</option>
-            {INDUSTRIES.map((i) => (
-              <option key={i.value} value={i.value}>{i.label}</option>
-            ))}
-          </select>
-
-          {draft.industry_code === "other" && (
-            <input
-              type="text"
-              value={draft.industry}
-              onChange={(e) => updateDraft({ industry: e.target.value })}
-              placeholder="Please specify your industry"
-              className="w-full border-b border-[var(--color-border)] bg-transparent py-3 mt-3 text-base outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-foreground)]"
-            />
-          )}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Location (state)</label>
-          <select
-            value={draft.location}
-            onChange={(e) => updateDraft({ location: e.target.value })}
-            className="w-full border-b border-[var(--color-border)] bg-white py-3 text-base outline-none transition-colors focus:border-[var(--color-foreground)] cursor-pointer"
-          >
-            <option value="">Select a state</option>
-            {AU_STATES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Asking price (AUD)</label>
-          <div className="relative">
-            <span className="absolute left-0 top-3 text-[var(--color-muted)]">$</span>
-            <input
-              type="number"
-              value={draft.asking_price || ""}
-              onChange={(e) => updateDraft({ asking_price: parseInt(e.target.value) || 0 })}
-              placeholder="500000"
-              className="w-full border-b border-[var(--color-border)] bg-transparent py-3 pl-4 text-base outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-foreground)]"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Public description
-            <span className="text-[var(--color-muted)] font-normal ml-2">
-              ({draft.description_public.length}/200)
-            </span>
-          </label>
-          <textarea
-            value={draft.description_public}
-            onChange={(e) => updateDraft({ description_public: e.target.value.slice(0, 200) })}
-            placeholder="A short teaser visible to everyone browsing the marketplace."
-            rows={3}
-            maxLength={200}
-            className="w-full border border-[var(--color-border)] bg-white p-3 text-base outline-none transition-colors placeholder:text-[var(--color-muted)] focus:border-[var(--color-foreground)] resize-none cursor-text"
-          />
-        </div>
-      </div>
-
-      <div className="flex justify-end pt-4">
-        <button
-          onClick={onNext}
-          disabled={!canProceed}
-          className="rounded-full bg-[var(--color-foreground)] px-10 py-3 text-base font-medium text-[var(--color-background)] transition-all hover:bg-[var(--color-foreground)]/90 disabled:opacity-30 disabled:cursor-not-allowed"
+        <WizardSelect
+          label="Industry"
+          value={draft.industry_code}
+          onChange={(e) => {
+            const val = e.target.value;
+            const selected = INDUSTRIES.find((i) => i.value === val);
+            updateDraft({
+              industry_code: val,
+              industry: val === "other" ? draft.industry : (selected?.label || ""),
+            });
+          }}
         >
-          Save &amp; continue
-        </button>
+          <option value="">Select an industry</option>
+          {INDUSTRIES.map((i) => (
+            <option key={i.value} value={i.value}>{i.label}</option>
+          ))}
+        </WizardSelect>
+
+        {draft.industry_code === "other" && (
+          <WizardInput
+            label="Specify your industry"
+            value={draft.industry}
+            onChange={(e) => updateDraft({ industry: e.target.value })}
+            placeholder="e.g. Specialty grain mill"
+          />
+        )}
+
+        <WizardSelect
+          label="Location"
+          value={draft.location}
+          onChange={(e) => updateDraft({ location: e.target.value })}
+          helperText="The state where the business primarily operates."
+        >
+          <option value="">Select a state</option>
+          {AU_STATES.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </WizardSelect>
+
+        <CurrencyInput
+          label="Asking price"
+          value={draft.asking_price}
+          onChange={(v) => updateDraft({ asking_price: v })}
+          helperText="The total price you're seeking for the business."
+        />
+
+        <WizardTextarea
+          label="Public description"
+          value={draft.description_public}
+          onChange={(e) => updateDraft({ description_public: e.target.value.slice(0, 200) })}
+          placeholder="A short teaser visible to everyone browsing the marketplace."
+          rows={3}
+          maxLength={200}
+          charCount={{ current: draft.description_public.length, max: 200 }}
+          helperText="This appears on the listing card. Keep it concise and compelling."
+        />
       </div>
+
+      <WizardActions onNext={onNext} disabled={!canProceed} />
     </div>
   );
 }

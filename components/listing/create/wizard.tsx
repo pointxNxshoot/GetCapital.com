@@ -191,30 +191,46 @@ export function Wizard() {
   return (
     <div className="mx-auto max-w-3xl px-8 lg:px-12 py-12">
       {/* Step indicator */}
-      <div className="mb-12">
-        <div className="flex items-center justify-between mb-4">
-          {STEPS.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => goToStep(s.id)}
-              className={`text-xs font-medium uppercase tracking-wider transition-colors ${
+      <div className="flex items-start justify-between border-b border-[var(--color-border)] pb-8 mb-12">
+        {STEPS.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => goToStep(s.id)}
+            className="flex flex-col items-start gap-2 text-left"
+          >
+            <div className="flex items-baseline gap-2">
+              <span
+                className={`text-sm font-medium tracking-wider transition-colors ${
+                  s.id === step
+                    ? "text-[var(--color-accent-orange)]"
+                    : s.id <= highestStep
+                      ? "text-[var(--color-foreground)]"
+                      : "text-[var(--color-muted)]"
+                }`}
+              >
+                {String(s.id).padStart(2, "0")}
+              </span>
+              <span
+                className={`text-sm font-medium uppercase tracking-wider transition-colors hidden sm:inline ${
+                  s.id === step
+                    ? "text-[var(--color-foreground)]"
+                    : s.id <= highestStep
+                      ? "text-[var(--color-foreground)] cursor-pointer"
+                      : "text-[var(--color-muted)]"
+                }`}
+              >
+                {s.label}
+              </span>
+            </div>
+            <div
+              className={`h-0.5 transition-all duration-300 ${
                 s.id === step
-                  ? "text-[var(--color-foreground)]"
-                  : s.id <= highestStep
-                    ? "text-[var(--color-muted-foreground)] cursor-pointer hover:text-[var(--color-foreground)]"
-                    : "text-[var(--color-border)] cursor-default"
+                  ? "w-full bg-[var(--color-accent-orange)]"
+                  : "w-0 bg-transparent"
               }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-        <div className="h-0.5 bg-[var(--color-border)] rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[var(--color-foreground)] transition-all duration-300"
-            style={{ width: `${((step - 1) / (STEPS.length - 1)) * 100}%` }}
-          />
-        </div>
+            />
+          </button>
+        ))}
       </div>
 
       {/* Saving indicator — subtle, not alarming */}
