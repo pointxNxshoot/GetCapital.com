@@ -28,8 +28,6 @@ export type ListingCardData = {
   ebitda_ltm: number;
 };
 
-const shadow = "drop-shadow(0 1px 3px rgba(0,0,0,0.5))";
-
 export function ListingCard({
   listing,
   priority = false,
@@ -62,142 +60,155 @@ export function ListingCard({
     setSaved((s) => !s);
   }
 
-  const facts = [
-    { value: formatCompactCurrency(listing.revenue_ltm), label: "Revenue" },
-    { value: formatCompactCurrency(listing.ebitda_ltm), label: "EBITDA" },
-    { value: `${listing.years_in_operation} yrs`, label: "Years" },
-    { value: listing.employees_count.toString(), label: "Employees" },
-  ];
-
   return (
-    <Link
-      href={`/listings/${listing.slug}`}
-      className="group block hover:bg-[var(--color-foreground)]/[0.015] transition-colors"
-    >
-      <div className="flex flex-col md:flex-row">
-        {/* Photo area */}
-        <div className="relative w-full md:w-[45%] aspect-[16/9] md:aspect-auto md:h-[340px] overflow-hidden flex-shrink-0">
+    <Link href={`/listings/${listing.slug}`} className="block">
+      <article
+        className="group relative flex flex-col md:flex-row bg-white border border-[var(--color-border)] rounded-xl overflow-hidden transition-all duration-200 ease-out cursor-pointer"
+        style={{
+          boxShadow: "var(--shadow-card-rest)",
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-card-hover)";
+          (e.currentTarget as HTMLElement).style.borderColor = "rgba(10,10,10,0.1)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-card-rest)";
+          (e.currentTarget as HTMLElement).style.borderColor = "";
+        }}
+      >
+        {/* Photo area — 45% on desktop, 16:10 aspect */}
+        <div className="relative w-full md:w-[45%] aspect-[16/10] overflow-hidden bg-[var(--color-muted)]/10">
           {photo && (
             <Image
               key={photo.storage_path}
               src={photo.storage_path}
               alt={photo.alt_text || listing.business_name}
               fill
-              className="object-cover"
+              className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               sizes="(max-width: 768px) 100vw, 45vw"
               priority={priority && currentPhoto === 0}
               quality={85}
             />
           )}
 
-          {/* Sample badge */}
+          {/* Sample badge — warm cream bg with blur */}
           {listing.is_demo && (
-            <span className="absolute top-4 left-4 bg-white/85 backdrop-blur-sm px-3 py-1 text-[11px] font-medium uppercase tracking-widest text-[var(--color-foreground)]/80">
+            <span className="absolute top-3 left-3 z-10 bg-[var(--color-background)]/95 backdrop-blur-sm px-2.5 py-1 text-[10px] font-medium uppercase tracking-widest text-[var(--color-foreground)] rounded-md"
+              style={{ boxShadow: "var(--shadow-card-rest)" }}
+            >
               Sample
             </span>
           )}
 
-          {/* Save heart — no container */}
+          {/* Save heart — white circle with blur */}
           <button
             onClick={toggleSave}
-            className="absolute top-4 right-4 hover:scale-110 transition-transform"
-            style={{ filter: shadow }}
+            className="absolute top-3 right-3 z-10 w-9 h-9 bg-white/95 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center transition-all duration-150"
+            style={{ boxShadow: "var(--shadow-card-rest)" }}
             aria-label={saved ? "Remove from saved" : "Save listing"}
           >
             <svg
-              width="28"
-              height="28"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
-              fill={saved ? "#FF6A00" : "none"}
-              stroke={saved ? "#FF6A00" : "white"}
+              fill={saved ? "var(--color-foreground)" : "none"}
+              stroke="var(--color-foreground)"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              className={saved ? "opacity-100" : "opacity-70"}
             >
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
           </button>
 
-          {/* Carousel arrows — no container, drop shadow */}
+          {/* Carousel arrows — appear on card hover */}
           {photos.length > 1 && (
-            <>
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
               <button
                 onClick={prevPhoto}
-                className="absolute left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
-                style={{ filter: shadow }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/95 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center pointer-events-auto transition-colors"
+                style={{ boxShadow: "var(--shadow-card-rest)" }}
                 aria-label="Previous photo"
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-foreground)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="15 18 9 12 15 6" />
                 </svg>
               </button>
               <button
                 onClick={nextPhoto}
-                className="absolute right-14 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
-                style={{ filter: shadow }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/95 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center pointer-events-auto transition-colors"
+                style={{ boxShadow: "var(--shadow-card-rest)" }}
                 aria-label="Next photo"
               >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-foreground)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </button>
-            </>
+            </div>
           )}
 
-          {/* Photo counter — plain text */}
+          {/* Photo counter — dark pill */}
           {photos.length > 1 && (
-            <span
-              className="absolute bottom-4 right-4 text-white text-sm font-medium"
-              style={{ filter: shadow }}
-            >
+            <span className="absolute bottom-3 right-3 z-10 px-2 py-0.5 bg-[var(--color-foreground)]/70 backdrop-blur-sm text-white text-xs font-medium rounded-md">
               {currentPhoto + 1} / {photos.length}
             </span>
           )}
         </div>
 
-        {/* Information area */}
-        <div className="w-full md:w-[55%] p-6 md:p-8 flex flex-col justify-between">
-          <div>
-            <div
-              className="text-4xl tracking-tight leading-none"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              {formatAskingPrice(listing.asking_price)}
-            </div>
+        {/* Information area — tighter rhythm */}
+        <div className="flex-1 p-6 md:p-8 flex flex-col">
+          {/* Price */}
+          <p
+            className="text-3xl md:text-4xl font-medium tracking-tight text-[var(--color-foreground)] mb-1"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            {formatAskingPrice(listing.asking_price)}
+          </p>
 
-            <h3
-              className="text-2xl tracking-tight mt-3"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              {listing.business_name}
-            </h3>
+          {/* Business name */}
+          <h3
+            className="text-xl md:text-2xl tracking-tight text-[var(--color-foreground)] mb-2"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            {listing.business_name}
+          </h3>
 
-            <p className="text-base text-[var(--color-muted-foreground)] mt-2 truncate">
-              {industryLabel} · {listing.location_city}, {listing.location_state}
-            </p>
+          {/* Industry · Location */}
+          <p className="text-sm text-[var(--color-muted-foreground)] mb-5">
+            {industryLabel} · {listing.location_city}, {listing.location_state}
+          </p>
+
+          {/* Metrics row — smaller, supporting */}
+          <div className="grid grid-cols-4 gap-4 mb-4 pb-4 border-b border-[var(--color-border)]/60">
+            <Metric value={formatCompactCurrency(listing.revenue_ltm)} label="Revenue" />
+            <Metric value={formatCompactCurrency(listing.ebitda_ltm)} label="EBITDA" />
+            <Metric value={`${listing.years_in_operation} yrs`} label="Operating" />
+            <Metric value={listing.employees_count.toString()} label="Employees" />
           </div>
 
-          <div className="grid grid-cols-4 mt-6 md:mt-8">
-            {facts.map((fact, i) => (
-              <div
-                key={fact.label}
-                className={i > 0 ? "border-l border-[var(--color-border)] pl-4 md:pl-6" : ""}
-              >
-                <div className="text-xl font-semibold leading-tight">
-                  {fact.value}
-                </div>
-                <div className="text-xs uppercase tracking-wider text-[var(--color-muted)] mt-1">
-                  {fact.label}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <p className="text-base text-[var(--color-foreground)]/85 mt-5 md:mt-6 line-clamp-2">
+          {/* Description teaser */}
+          <p className="text-sm text-[var(--color-muted-foreground)] line-clamp-2 leading-relaxed">
             {listing.public_description}
           </p>
         </div>
-      </div>
+      </article>
     </Link>
+  );
+}
+
+function Metric({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex flex-col">
+      <span
+        className="text-base font-medium text-[var(--color-foreground)] leading-tight"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        {value}
+      </span>
+      <span className="text-[10px] font-medium tracking-widest uppercase text-[var(--color-muted)] leading-tight mt-1">
+        {label}
+      </span>
+    </div>
   );
 }

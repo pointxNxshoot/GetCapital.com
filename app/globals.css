@@ -57,6 +57,11 @@
   --font-size-display-md: clamp(2rem, 5vw, 4rem);
   --font-size-section-number: clamp(4rem, 10vw, 8rem);
 
+  /* Card shadows */
+  --shadow-card-rest: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-overlay: 0 2px 8px rgba(0, 0, 0, 0.12);
+
   /* Spacing — generous Swiss layout */
   --spacing-section: 8rem;
   --spacing-section-sm: 5rem;

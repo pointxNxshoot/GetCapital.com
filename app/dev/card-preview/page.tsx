@@ -83,11 +83,9 @@ export default async function CardPreviewPage() {
         </p>
       </div>
 
-      <div className="divide-y divide-[var(--color-border)]">
+      <div className="space-y-6">
         {cards.map((card, index) => (
-          <div key={card.id} className="py-8 first:pt-0 last:pb-0">
-            <ListingCard listing={card} priority={index < 3} />
-          </div>
+          <ListingCard key={card.id} listing={card} priority={index < 3} />
         ))}
       </div>
     </div>
