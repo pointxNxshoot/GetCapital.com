@@ -91,66 +91,64 @@ export function ListingCard({
             />
           )}
 
-          {/* Sample badge — warm cream bg with blur */}
+          {/* Sample badge — dark translucent pill */}
           {listing.is_demo && (
-            <span className="absolute top-3 left-3 z-10 bg-[var(--color-background)]/95 backdrop-blur-sm px-2.5 py-1 text-[10px] font-medium uppercase tracking-widest text-[var(--color-foreground)] rounded-md"
-              style={{ boxShadow: "var(--shadow-card-rest)" }}
-            >
+            <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--color-foreground)]/70 backdrop-blur-md rounded-full text-[10px] font-medium tracking-wider uppercase text-white">
+              <span className="w-1.5 h-1.5 rounded-full bg-white/90" />
               Sample
-            </span>
+            </div>
           )}
 
-          {/* Save heart — white circle with blur */}
+          {/* Save heart — no background, drop shadow */}
           <button
             onClick={toggleSave}
-            className="absolute top-3 right-3 z-10 w-9 h-9 bg-white/95 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center transition-all duration-150"
-            style={{ boxShadow: "var(--shadow-card-rest)" }}
+            className="absolute top-3 right-3 z-10 text-white hover:scale-110 transition-transform duration-150"
+            style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}
             aria-label={saved ? "Remove from saved" : "Save listing"}
           >
             <svg
-              width="16"
-              height="16"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
-              fill={saved ? "var(--color-foreground)" : "none"}
-              stroke="var(--color-foreground)"
-              strokeWidth="2"
+              fill={saved ? "var(--color-accent-orange)" : "none"}
+              stroke={saved ? "var(--color-accent-orange)" : "white"}
+              strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className={saved ? "opacity-100" : "opacity-70"}
             >
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
           </button>
 
-          {/* Carousel arrows — appear on card hover */}
+          {/* Carousel arrows — no background, white chevrons with drop shadow */}
           {photos.length > 1 && (
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
               <button
                 onClick={prevPhoto}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/95 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center pointer-events-auto transition-colors"
-                style={{ boxShadow: "var(--shadow-card-rest)" }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-auto text-white hover:scale-110 transition-transform duration-150"
+                style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}
                 aria-label="Previous photo"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-foreground)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="15 18 9 12 15 6" />
                 </svg>
               </button>
               <button
                 onClick={nextPhoto}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/95 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center pointer-events-auto transition-colors"
-                style={{ boxShadow: "var(--shadow-card-rest)" }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-auto text-white hover:scale-110 transition-transform duration-150"
+                style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}
                 aria-label="Next photo"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-foreground)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </button>
             </div>
           )}
 
-          {/* Photo counter — dark pill */}
+          {/* Photo counter — dark translucent pill */}
           {photos.length > 1 && (
-            <span className="absolute bottom-3 right-3 z-10 px-2 py-0.5 bg-[var(--color-foreground)]/70 backdrop-blur-sm text-white text-xs font-medium rounded-md">
+            <span className="absolute bottom-3 right-3 z-10 px-2 py-0.5 bg-[var(--color-foreground)]/70 backdrop-blur-md text-white text-xs font-medium rounded-full">
               {currentPhoto + 1} / {photos.length}
             </span>
           )}
